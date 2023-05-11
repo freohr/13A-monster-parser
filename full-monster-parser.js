@@ -10,32 +10,11 @@ function stringToPascalCase(string) {
     return capitalizedWords.join(' ');
 }
 
-async function suggestBlockToParse() {
-    const blockTypes = {
-        names: ["Description", "Attacks", "Traits", "Triggered Attacks", "Nastier Specials"],
-        types: ["desc", "attacks", "traits", "triggers", "nastiers"]
-    }
-
-    const operationTypes = {
-        names: ["Initial Parse", "Parse & Replace", "Parse & Append", "Manual Entry"],
-        types: ["parse-replace", "parse-replace", "parse-append", "manual-entry"]
-    }
-
-    if (!iKnowWhatImDoing) {
-        await this.quickAddApi.infoDialog("What kind of info do you want to manage?");
-    }
-    const blockType = await this.quickAddApi.suggester(blockTypes.names, blockTypes.types);
-    const blockName = blockTypes.names.at(blockTypes.types.indexOf(blockType));
-
-    if (!iKnowWhatImDoing) {
-        await this.quickAddApi.infoDialog(`How do you want to add ${blockName} to the statblock`);
-    }
-    const operationType = await this.quickAddApi.suggester(operationTypes.names, operationTypes.types);
-
-    return {
-        operation: operationType,
-        block: blockType
-    };
+function isEmpty(stuff) {
+    if (stuff === undefined) return true;
+    if (Array.isArray(stuff) && stuff.length === 0) return true;
+    if (typeof stuff === "string" && stuff.length === 0) return true;
+    return Object.entries(stuff).length === 0;
 }
 
 function createTrait(name, desc) {
@@ -57,7 +36,7 @@ function createTextHandler(textBlock) {
     return {
         textArray: textBlock.split('\n').filter(s => s.length > 0).map(s => s.trim()),
         currentIndex: 0,
-        reset: function() {
+        reset: function () {
             this.textArray = [];
             this.currentIndex = 0;
         },
@@ -144,7 +123,7 @@ function createBlockParser(textHandler) {
         parseTraitBlock() {
             return this.getTraits();
         },
-        parseDescriptionBlock(descriptionBlock) {
+        parseDescriptionBlock() {
             const monsterDescription = {
                 name: "",
                 flavorText: "",
@@ -158,20 +137,20 @@ function createBlockParser(textHandler) {
             }
 
             // First line is the monster name
-            monsterDescription.name = stringToPascalCase(this.textHandler.currentLine);
+            monsterDescription.name = stringToPascalCase(this.textHandler.currentLine());
             this.textHandler.advanceIndex();
 
             // We consider any text until the monster strength line flavor-text
             const flavorText = [];
-            while (!this.textHandler.atEnd && (this.textHandler.currentLine.match(this.strengthLineRegex) === null)) {
-                flavorText.push(this.textHandler.currentLine);
+            while (!this.textHandler.atEnd() && (this.textHandler.currentLine().match(this.strengthLineRegex) === null)) {
+                flavorText.push(this.textHandler.currentLine());
                 this.textHandler.advanceIndex();
             }
             monsterDescription.flavorText = flavorText.join(' ');
 
             // We should be at the monster strength line now
             let strengthMatch;
-            if ((strengthMatch = this.textHandler.currentLine.match(this.strengthLineRegex))) {
+            if ((strengthMatch = this.textHandler.currentLine().match(this.strengthLineRegex))) {
                 // Expected RegEx : /(?<strength>[^\s]+) (?<ordinal>(?<level>\d+)(st|nd|rd|th)) level (?<role>[^\s]+) \[(?<type>[^\s]+)]/;
                 monsterDescription.strength = strengthMatch.groups.strength.toLowerCase();
                 monsterDescription.level = strengthMatch.groups.level;
@@ -183,12 +162,12 @@ function createBlockParser(textHandler) {
                 throw "Bad monster description block format";
             }
 
-            while (!this.textHandler.atEnd) {
+            while (!this.textHandler.atEnd()) {
                 // After that, there should only be Init and Vulnerabilities left, we don't need to do it in order
                 let lineMatch;
-                if ((lineMatch = this.textHandler.currentLine.match(this.initiativeRegex))) {
+                if ((lineMatch = this.textHandler.currentLine().match(this.initiativeRegex))) {
                     monsterDescription.initiative = lineMatch.groups.initiative;
-                } else if ((lineMatch = this.textHandler.currentLine.match(this.vulnerabilityRegex))) {
+                } else if ((lineMatch = this.textHandler.currentLine().match(this.vulnerabilityRegex))) {
                     monsterDescription.vulnerabilities = stringToPascalCase(lineMatch.groups.vulnerability);
                 }
                 this.textHandler.advanceIndex();
@@ -203,31 +182,30 @@ function createBlockWriter(quickAddFile) {
     return {
         quickAddFile: quickAddFile,
 
-        addIndentation(string) {
-            return `    ${string}`;
+        addIndentation: (string) => {
+            return `      ${string}`;
         },
         // 13A Statblock specific formats
         attackHeaderLine: `actions:`,
         traitsHeaderLine: `traits:`,
-        attackTraitsHeaderLine: this.addIndentation(this.traitsHeaderLine),
+        attackTraitsHeaderLine() { return this.addIndentation(this.traitsHeaderLine) },
         triggersHeaderLine: `triggered_actions:`,
         nastiersHeaderLine: `nastier_traits:`,
+
+        // internal helpers
         noIndentNameLine: (name) => `    - name: \"${name}\"`,
         noIndentDescLine: (desc) => `      desc: \"${desc}\"`,
-        attackTraitNameLine: (name) => this.addIndentation(this.noIndentNameLine(name)),
-        attackTraitDescLine: (desc) => this.addIndentation(this.noIndentDescLine(desc)),
+        attackTraitNameLine(name) { return this.addIndentation(this.noIndentNameLine(name)) },
+        attackTraitDescLine(desc) { return this.addIndentation(this.noIndentDescLine(desc)) },
 
         // YAML Writer
         createAttackLine(attack) {
             const attackLine = [];
-            attackLine.push(this.noIndentNameLine(attack.name));
-            attackLine.push(this.noIndentDescLine(attack.desc));
+            attackLine.push(this.noIndentNameLine(attack.name), this.noIndentDescLine(attack.desc));
 
-            if (attack.traits) {
-                for (const trait in attack.traits) {
-                    attackLine.push(this.attackTraitNameLine(trait.name));
-                    attackLine.push(this.attackTraitDescLine(trait.desc));
-                }
+            if (attack.traits && Array.isArray(attack.traits) && attack.traits.length > 0) {
+                attackLine.push(this.attackTraitsHeaderLine())
+                attack.traits.forEach(trait => attackLine.push(this.attackTraitNameLine(trait.name), this.attackTraitDescLine(trait.desc)))
             }
 
             return attackLine.join('\n');
@@ -251,12 +229,10 @@ function createBlockWriter(quickAddFile) {
 
             this.quickAddFile.variables.monsterDescription = descriptionYAMLArray.join('\n');
         },
-        writeAttackBlock(attackHeader, attackArray) {
+        writeAttackBlock(attackHeader, attacks) {
             const attackYAMLArray = [attackHeader];
 
-            for (const attack in attackArray) {
-                attackYAMLArray.push(this.createAttackLine(attack));
-            }
+            attacks.forEach(attack => attackYAMLArray.push(this.createAttackLine(attack)));
 
             if (attackHeader.startsWith("actions")) {
                 this.quickAddFile.variables.actions = attackYAMLArray.join('\n');
@@ -264,26 +240,50 @@ function createBlockWriter(quickAddFile) {
                 this.quickAddFile.variables.triggerActions = attackYAMLArray.join('\n');
             }
         },
-        appendAttackToBlock(attackHeader, attack) {
+        appendAttacksToBlock(attackHeader, attacks) {
+            const flatAttackArray = [attacks].flat();
+
             const targetBlock =
                 attackHeader.startsWith("actions") ? "actions" :
                     attackHeader.startsWith("trigger") ? "triggerActions" :
                         undefined;
 
-            const attackYAMLArray = [this.quickAddFile.variables[targetBlock], this.createAttackLine(attack)];
+            const attackYAMLArray = [this.quickAddFile.variables[targetBlock], flatAttackArray.map(attack => this.createAttackLine(attack))].flat();
 
             this.quickAddFile.variables[targetBlock] = attackYAMLArray.join('\n');
         },
-        writeTraitsBlock(traitHeader, traitBlock) {
+        writeTraitsBlock(traitHeader, traits) {
+            const traitsYAML = []
 
+            traitsYAML.push(traitHeader);
+            traits.forEach(trait => {
+                traitsYAML.push(this.noIndentNameLine(trait.name), this.noIndentDescLine(trait.desc));
+            });
+
+            const traitType = traitHeader.startsWith("trait") ? "traits" :
+                traitHeader.startsWith("nastier") ? "nastierTraits" : "";
+
+            this.quickAddFile.variables[traitType] = traitsYAML.join('\n');
         },
         appendTraitToBlock(traitHeader, trait) {
+            const traitType = traitHeader.startsWith("trait") ? "traits" :
+                traitHeader.startsWith("nastier") ? "nastierTraits" : "";
 
+            const newTraitArray = [this.quickAddFile.variables[traitType], this.noIndentNameLine(trait.name), this.noIndentDescLine(trait.desc)];
+
+            this.quickAddFile.variables[traitType] = newTraitArray.join('\n');
         }
     }
 }
 
-/*
+
+
+// Basic tests below
+const quickAddMock = {
+    variables: {}
+}
+const monsterWriter = createBlockWriter(quickAddMock);
+
 // Test on monster description
 const multiLineDesc = `Fire Giant
 Fire giants are some of the
@@ -304,10 +304,9 @@ Large 8th level wrecker [giant]
 Initiative: +12
 Vulnerability: cold, thunder, acid`;
 
-const parsedDesc = parser.parseDescriptionBlock(new TextHandler(multiLineDesc));
-*/
-
-
+const descriptionParser = createBlockParser(createTextHandler(multiLineDesc));
+const parsedDesc = descriptionParser.parseDescriptionBlock();
+monsterWriter.writeDescriptionBlock(parsedDesc);
 
 // Test on Attacks
 const multiLineAttacks = `Flaming greatsword +13 vs. AC (2 attacks)—35 damage
@@ -317,35 +316,36 @@ Natural even hit or miss: The target also takes 10 ongoing fire damage.`;
 
 const attackParser = createBlockParser(createTextHandler(multiLineAttacks))
 const parsedAttacks = attackParser.parseAttackBlock();
-
+monsterWriter.writeAttackBlock(monsterWriter.attackHeaderLine, parsedAttacks.attacks);
 
 // Test on Traits
 const multiLineTraits = `Fiery escalator: The fire giant adds the escalation die to its attacks
 against targets taking ongoing fire damage.
 Resist fire 16+: When a fire attack targets this creature, the
-attacker must roll a natural 16+ on the attack roll or it only
+attacker must roll a natural 16+ on the attack roll, or it only
 deals half damage.`;
 
 const traitParser = createBlockParser(createTextHandler(multiLineTraits))
 const parsedTraits = traitParser.parseTraitBlock();
+monsterWriter.writeTraitsBlock(monsterWriter.traitsHeaderLine, parsedTraits);
 
-/*
 // Test on Nastier Traits
 const multiLineNastierTraits = `Burning blood: When a fire giant becomes staggered, it deals 10
 ongoing fire damage to each enemy engaged with it.
 Strength of giants: Twice per battle, the giant can make a slam
 attack as a quick action (once per round).`;
 
-const parsedNastierTraits = parser.parseTraitBlock(new TextHandler(multiLineNastierTraits));
-*/
+const nastierTraitParser = createBlockParser(createTextHandler(multiLineNastierTraits))
+const parsedNastierTraits = nastierTraitParser.parseTraitBlock();
+monsterWriter.writeTraitsBlock(monsterWriter.nastiersHeaderLine, parsedNastierTraits)
 
-/*
 // Test on Triggered Attacks
 const multiLineTriggerAttacks = `Slam +12 vs. PD (one enemy smaller than it)—10 damage,
 the target pops free from the giant, and the target loses its
 next move action`;
 
-const parsedTriggerAttacks = parser.parseAttackBlock(new TextHandler(multiLineTriggerAttacks));
-*/
+const triggeredAttackParser = createBlockParser(createTextHandler(multiLineTriggerAttacks))
+const parsedTriggeredAttacks = triggeredAttackParser.parseAttackBlock();
+monsterWriter.writeAttackBlock(monsterWriter.triggersHeaderLine, parsedTriggeredAttacks.attacks);
 
 console.log("hello");
