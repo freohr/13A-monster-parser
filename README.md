@@ -10,10 +10,16 @@ This repo does not include any actual statblocks, the tools within are to be use
 
 ## ToDo
 
-- [ ] Write the YAML Writer
+- [x] Write the YAML Writer
 - [ ] Write a barebones QuickAdd prompter
-  - Intended order of prompting: Monster Desc, Attacks (including Triggered Attacks), Traits, Nastier Specials
+  - Intended order of prompting: 
+  - [x] Monster Desc, 
+  - [x] Attacks 
+  - [x] (including Triggered Attacks),
+  - [x] Traits, 
+  - [x] Nastier Specials,
+  - [ ] Defenses
 - [ ] Put all that in a Markdown file to be used as a QuickAdd template
-- [ ] Write a cleanup prompter for which you can choose which block to parse next
-- [ ] Add a prompter to manually enter single attacks(triggered or not) and traits (because the 13A official statblock format is only 90% standardized >.> )
+- [ ] Write a cleaned-up prompter with which you can choose which block to parse next
+- [ ] Add a prompter to manually enter single attacks or partial attack blocks (triggered or not) and traits (because the 13A official statblock format is only 90% standardized >.> )
 
