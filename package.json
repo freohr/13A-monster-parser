@@ -1,0 +1,10 @@
+{
+  "name": "monster-parser-13a",
+  "type": "module",
+  "version": "1.0.0",
+  "dependencies": {
+  },
+  "files": [
+    "full-monster-parser.js"
+  ]
+}
