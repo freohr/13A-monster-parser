@@ -5,6 +5,12 @@
   "dependencies": {
   },
   "files": [
+    "0-helpers.js",
+    "1-trait.js",
+    "2-attack.js",
+    "3-text-handler.js",
+    "4-block-parser.js",
+    "5-block-writer.js",
     "full-monster-parser.js"
   ]
 }
