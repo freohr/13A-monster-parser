@@ -1,6 +1,7 @@
 import {Trait} from "./1-trait.js";
 import {Attack} from "./2-attack.js";
 import {helpers} from "./0-helpers.js";
+import {TextHandler} from "./3-text-handler.js";
 
 export class BlockParser {
     #textHandler;
@@ -10,8 +11,8 @@ export class BlockParser {
         return new BlockParser(textHandler);
     }
 
-    constructor(textHandler) {
-        this.#textHandler = textHandler;
+    constructor(textBlock) {
+        this.#textHandler = new TextHandler(textBlock);
     }
 
     static get #attackStarterRegex() { return /^(?<attack_name>.+)—(?<attack_desc>.*)/; }

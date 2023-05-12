@@ -2,111 +2,7 @@ import {BlockParser} from "./4-block-parser.js";
 import {BlockWriter} from "./5-block-writer.js";
 import {TextHandler} from "./3-text-handler.js";
 
-/*
-function createMonsterPrompter(quickAddApi) {
-    return {
-        quickAddApi: quickAddApi,
-        async suggestBlockToParse() {
-            const blockTypes = {
-                names: ["a Description", "Attacks", "Traits", "Triggered Attacks", "Nastier Specials", "I'm done"],
-                types: ["desc", "attacks", "traits", "triggers", "nastiers", "done"]
-            }
-            const operationTypes = {
-                names: ["Initial Parse", "Parse & Replace", "Parse & Append", "Manual Entry"],
-                types: ["parse-replace", "parse-replace", "parse-append", "manual-entry"]
-            }
 
-            // First we ask the user what kind of block they want to enter
-            if (!iKnowWhatImDoing) {
-                await this.quickAddApi.infoDialog("What kind of info do you want to manage?");
-            }
-            const blockType = await this.quickAddApi.suggester(blockTypes.names, blockTypes.types);
-            const blockName = blockTypes.names.at(blockTypes.types.indexOf(blockType));
-
-            if (blockType === "done") {
-                // Nothing more to add, we can just return
-                return {
-                    block: blockType,
-                    operation: ""
-                };
-            }
-
-            // Then, how they want to enter it
-            if (!iKnowWhatImDoing) {
-                await this.quickAddApi.infoDialog(`How do you want to add ${blockName} to the statblock?`);
-            }
-            const operationType = await this.quickAddApi.suggester(operationTypes.names, operationTypes.types);
-
-            return {
-                block: blockType,
-                operation: operationType
-            };
-        },
-        async getMonsterDescription() {
-            const desc = await this.quickAddApi.wideInputPrompt("Monster Description?");
-            const descParser = createBlockParser(createTextHandler(desc));
-            const descWriter = createBlockWriter(this.quickAddApi);
-            descWriter.writeDescriptionBlock(descParser.parseDescriptionBlock());
-        },
-        async getMonsterAttacks() {
-            const attacks = await this.quickAddApi.wideInputPrompt("Monster Attacks?");
-            const attackParser = createBlockParser(createTextHandler(attacks));
-            const attackWriter = createBlockWriter(this.quickAddApi);
-
-            const parsedAttacks = attackParser.parseAttackBlock();
-            attackWriter.writeAttackBlock(attackWriter.attackHeaderLine, parsedAttacks.attacks);
-            attackWriter.writeAttackBlock(attackWriter.triggersHeaderLine, parsedAttacks.triggeredAttacks);
-        },
-        async getMonsterTraits() {
-            const traits = await this.quickAddApi.wideInputPrompt("Monster Traits?");
-
-            const traitParser = createBlockParser(createTextHandler(traits));
-            const traitWriter = createBlockWriter(this.quickAddApi);
-
-            traitWriter.writeTraitsBlock(traitWriter.traitsHeaderLine, traitParser.getTraits());
-        },
-        async getMonsterTriggerAttacks() {
-            const attacks = await this.quickAddApi.wideInputPrompt("Monster Triggered Attacks?");
-            const attackParser = createBlockParser(createTextHandler(attacks));
-            const attackWriter = createBlockWriter(this.quickAddApi);
-
-            const parsedAttacks = attackParser.parseAttackBlock();
-
-            if (!isEmpty(this.quickAddApi.variables.triggerActions)) {
-                attackWriter.appendAttacksToBlock(attackWriter.triggersHeaderLine, parsedAttacks.attacks);
-                attackWriter.appendAttacksToBlock(attackWriter.triggersHeaderLine, parsedAttacks.triggeredAttacks);
-            } else {
-                attackWriter.writeAttackBlock(attackWriter.triggersHeaderLine, parsedAttacks.attacks);
-                attackWriter.appendAttacksToBlock(attackWriter.triggersHeaderLine, parsedAttacks.triggeredAttacks);
-            }
-        },
-        async getMonsterNastierTraits() {
-            const traits = await this.quickAddApi.wideInputPrompt("Monster Nastier Specials?");
-
-            const traitParser = createBlockParser(createTextHandler(traits));
-            const traitWriter = createBlockWriter(this.quickAddApi);
-
-            traitWriter.writeTraitsBlock(traitWriter.nastiersHeaderLine, traitParser.getTraits());
-        },
-        async getMonsterDefenses() {
-            const defenses = await this.quickAddApi.wideInputPrompt("Monster Defenses?");
-
-            const defenseParser = createBlockParser(createTextHandler(defenses));
-            const defenseWriter = createBlockWriter(this.quickAddApi);
-
-            // ToDo: Add parser and writer for Defenses (AC, PD, MD, HP)
-        },
-        async promptMinimalistParser() {
-            await this.getMonsterDescription();
-            await this.getMonsterAttacks();
-            await this.getMonsterTraits();
-            await this.getMonsterNastierTraits();
-            await this.getMonsterTriggerAttacks();
-            // await this.getMonsterDefenses();
-        }
-    }
-}
-*/
 // Basic tests below
 const quickAddMock = {
     variables: {}
@@ -138,6 +34,8 @@ console.log(BlockWriter.writeDescriptionBlock(parsedDesc));
 
 // Test on Attacks
 const multiLineAttacks = `Flaming greatsword +13 vs. AC (2 attacks)—35 damage
+Natural even hit or miss: The target also takes 10 ongoing fire damage.
+Flaming greatsword +13 vs. AC (2 attacks)—35 damage
 Natural even hit or miss: The target also takes 10 ongoing fire damage.
 R: Flaming black-iron javelin +11 vs. AC—40 damage
 Natural even hit or miss: The target also takes 10 ongoing fire damage.`;

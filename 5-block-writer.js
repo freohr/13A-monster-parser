@@ -44,12 +44,28 @@ export class BlockWriter {
         return attackStrings.join('\n');
     };
 
+    static writeStandardAttacksBlock(attacks) {
+        return this.writeAttacksBlock(this.attackHeaderLine, attacks);
+    }
+
+    static writeTriggeredAttacksBlock(attacks) {
+        return this.writeAttacksBlock(this.triggersHeaderLine, attacks);
+    }
+
     static writeAttacksBlock(blockStarter, attacks) {
         const flatAttackArray = [attacks].flat();
         const attackYAMLBlocks = [blockStarter, ...flatAttackArray.map(attack => BlockWriter.#createSingleAttackBlock(attack))];
 
         return attackYAMLBlocks.join('\n');
     };
+
+    static writeStandardTraitsBlock(traits) {
+        return this.writeTraitsBlock(this.traitsHeaderLine, traits);
+    }
+
+    static writeNastierTraitsBlock(traits) {
+        return this.writeTraitsBlock(this.nastiersHeaderLine, traits);
+    }
 
     static writeTraitsBlock(blockStarter, traits) {
         const flatTraitArray = [traits].flat();
