@@ -136,4 +136,24 @@ export class BlockParser {
 
         return monsterDescription;
     };
+
+    parseDefenseBlock() {
+        const defenses = {
+            ac: 0,
+            pd: 0,
+            md: 0,
+            hp: 0,
+        }
+
+        let defenseMatch;
+
+        while (!this.#textHandler.atEnd) {
+            if ((defenseMatch = this.#textHandler.currentLine.match(BlockParser.#defenseRegex))) {
+                defenses[defenseMatch.groups.name.toLowerCase()] = parseInt(defenseMatch.groups.value);
+            }
+            this.#textHandler.advanceIndex()
+        }
+
+        return defenses;
+    }
 }

@@ -176,4 +176,14 @@ const triggeredAttackParser = new BlockParser(new TextHandler(multiLineTriggerAt
 const parsedTriggeredAttacks = triggeredAttackParser.parseAttackBlock();
 console.log(BlockWriter.writeAttacksBlock(BlockWriter.triggersHeaderLine, parsedTriggeredAttacks.attacks));
 
+// Test on Defenses
+const multilineDefenses = `AC 25
+PD 21\t\t
+ HP 285
+MD 17`;
+
+const defenseParser = new BlockParser(new TextHandler(multilineDefenses))
+const parsedDefenses = defenseParser.parseDefenseBlock();
+console.log(BlockWriter.writeDefenseBlock(parsedDefenses));
+
 console.log("hello");

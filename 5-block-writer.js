@@ -73,4 +73,8 @@ export class BlockWriter {
     static writeDescriptionBlock(descriptionBlock) {
         return BlockWriter.#writeObjectToYaml(descriptionBlock);
     };
+
+    static writeDefenseBlock(defenseBlock) {
+        return BlockWriter.#writeObjectToYaml(defenseBlock);
+    }
 }
