@@ -10,14 +10,27 @@ This repo does not include any actual statblocks, the tools within are to be use
 
 ## ToDo
 
+- [x] Write parser for the various blocks in a monster Statblock 
+  - [x] Monster Desc,
+  - [x] Attacks
+  - [x] (including Triggered Attacks),
+  - [x] Traits,
+  - [x] Nastier Specials,
+  - [x] Defenses
 - [x] Write the YAML Writer
+  - [x] Monster Desc,
+  - [x] Attacks
+  - [x] (including Triggered Attacks),
+  - [x] Traits,
+  - [x] Nastier Specials,
+  - [x] Defenses
 - [ ] Write a barebones QuickAdd prompter
   - Intended order of prompting: 
-  - [x] Monster Desc, 
-  - [x] Attacks 
-  - [x] (including Triggered Attacks),
-  - [x] Traits, 
-  - [x] Nastier Specials,
+  - [ ] Monster Desc, 
+  - [ ] Attacks 
+  - [ ] (including Triggered Attacks),
+  - [ ] Traits, 
+  - [ ] Nastier Specials,
   - [ ] Defenses
 - [ ] Put all that in a Markdown file to be used as a QuickAdd template
 - [ ] Write a cleaned-up prompter with which you can choose which block to parse next
