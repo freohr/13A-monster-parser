@@ -1,12 +1,8 @@
-import { BlockParser } from "./4-block-parser.js";
-import { TextHandler } from "./3-text-handler.js";
-import { BlockWriter } from "./5-block-writer.js";
-
 class QuickAddPrompter {
   #quickAddApi;
 
   static create(quickAddApi) {
-    return new QuickAddPrompter(quickAddApi);
+    return QuickAddPrompter(quickAddApi);
   }
 
   constructor(quickAddApi) {

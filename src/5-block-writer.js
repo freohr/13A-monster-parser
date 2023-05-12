@@ -1,4 +1,4 @@
-export class BlockWriter {
+class BlockWriter {
   static #addIndentation(string) {
     return `      ${string}`;
   }

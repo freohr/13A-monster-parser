@@ -1,4 +1,4 @@
-export class helpers {
+class helpers {
   static stringToPascalCase(string) {
     const allWords = string.split(" ");
     const capitalizedWords = allWords.map((s) =>

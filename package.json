@@ -5,12 +5,13 @@
   "dependencies": {
   },
   "files": [
-    "0-helpers.js",
-    "1-trait.js",
-    "2-attack.js",
-    "3-text-handler.js",
-    "4-block-parser.js",
-    "5-block-writer.js",
-    "full-monster-parser.js"
+    "src/0-helpers.js",
+    "src/1-trait.js",
+    "src/2-attack.js",
+    "src/3-text-handler.js",
+    "src/4-block-parser.js",
+    "src/5-block-writer.js",
+    "src/monster-parser-tester.js",
+    "assets/scripts/monster-parser.js"
   ]
 }

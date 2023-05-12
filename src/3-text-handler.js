@@ -8,10 +8,12 @@ export class TextHandler {
   }
 
   constructor(textBlock) {
-    this.#textArray = textBlock
-      .split("\n")
-      .filter((s) => s.length > 0)
-      .map((s) => s.trim());
+    if (typeof textBlock === "string") {
+      this.#textArray = textBlock
+        .split("\n")
+        .filter((s) => s.length > 0)
+        .map((s) => s.trim());
+    }
   }
 
   reset() {
