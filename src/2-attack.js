@@ -9,7 +9,7 @@ export class Attack extends Trait {
   }
   constructor(name, description, traits) {
     super(name, description);
-    this.#traits = traits;
+    this.#traits = traits ?? [];
   }
 
   get traits() {

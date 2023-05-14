@@ -4,6 +4,7 @@ import { TextHandler } from "./3-text-handler.js";
 import { SrdBlockParser } from "./7-srd-block-parser.js";
 
 // Basic tests below
+/*
 const quickAddMock = {
   variables: {},
 };
@@ -100,6 +101,8 @@ MD 17`;
 const defenseParser = new BlockParser(multilineDefenses);
 const parsedDefenses = defenseParser.parseDefenseBlock();
 console.log(BlockWriter.writeDefenseBlock(parsedDefenses));
+
+*/
 
 
 // Test on SRD output
@@ -218,8 +221,59 @@ HP
 
 870`;
 
+const fireGiantText = `Large
+
+8th level
+
+Wrecker
+
+Giant
+\t
+
+Initiative: +12
+Vulnerability: cold
+
+Flaming greatsword +13 vs. AC (2 attacks) — 35 damage
+ Natural even hit or miss: The target also takes 10 ongoing fire damage.
+
+R: Flaming black-iron javelin +11 vs. AC — 40 damage
+ Natural even hit or miss: The target also takes 10 ongoing fire damage.
+
+Fiery escalator: The fire giant adds the escalation die to its attacks against targets taking ongoing fire damage.
+
+Resist fire 16+: When a fire attack targets this creature, the attacker must roll a natural 16+ on the attack roll or it only deals half damage.
+
+Nastier Specials
+
+Burning blood: When a fire giant becomes staggered, it deals 10 ongoing fire damage to each enemy engaged with it.
+
+Strength of giants: Twice per battle, the giant can make a slam attack as a quick action (once per round).
+
+Slam +12 vs. PD (one enemy smaller than it) — 10 damage, the target pops free from the giant, and the target loses its next move action
+\t
+
+AC
+
+PD
+
+MD
+
+HP
+\t
+
+25
+
+21
+
+17
+
+285`
+
 const srdParser = new SrdBlockParser(greatDragonSrdText);
 
 console.log(srdParser.getMonsterDescription());
+console.log(srdParser.getMonsterAttacks());
+console.log(srdParser.getMonsterTraits());
+console.log(srdParser.getMonsterNastierSpecials());
 
 console.log("hello");
