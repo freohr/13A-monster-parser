@@ -55,7 +55,7 @@ For now, the parser only exists as a minimalist set of prompters. In order, the 
     - This is the top of the statblock, which contains: the Monster's **Name**, its **Flavor text**, the **"Strength" line** (e.g. `Large 8th level wrecker [giant]` for the [Fire Giant](https://www.13thagesrd.com/monsters/#Fire_Giant)), its **Initiative** bonus and its potential **Vulnerability**
     - /!\ **Important manual step**: Make sure that the monster's name on its entirety is on the **_first line_**, because the parser has no way of distinguishing between a potential second line of the monster's name and the start of it's flavor text
 2. The monster's Attacks
-    - All the lines containing attacks, including any `[Special Triggers]` if there is any
+    - All the lines containing attacks, including any `[Special Triggers]` if there are any present
     - The expected format is `[Attack Name] [Attack Bonus] vs. [Target's Defense] [(Any additional info, like # of targets)]—[Effect]`
     - /!\ **Important manual step 1**: All attacks' names must be on **1 line** (until and including the em-dash), because the parser cannot distinguish between the start of a new attack line and the end of a potential description or trait from a previous attack. The description can be on multiple lines.
     - /!\ **Important manual step 2**: If there are any traits to the attack (expected format `[Trait Name/Roll trigger]: [trait effect]`), their name must be on a single line (up to and including the semicolon), because the parser cannot distinguish between the start of... same thing as the attacks.
@@ -72,6 +72,10 @@ For now, the parser only exists as a minimalist set of prompters. In order, the 
     - AC, PD, MD and HP. If you copy paste from a book, they should be on a line each. If not, manually put each on their dedicated line.
 
 After that, the prompter should close, and your newly imported monster's note should open inn your current Obsidian view. If you get an error message during the process, check the format of the blocks (the parser usually throws an exception in the middle if something goes wrong), and if it still doesn't work, [open an issue](https://github.com/freohr/obsidian-13A-monster-parser/issues/new) here with the incriminating statblock, and I'll take a look at it.
+
+Here's a picture showing which part of the monster's statblock is which block:
+
+![example-blocks-fire-giant.png](example-blocks-fire-giant.png)
 
 ## ToDo
 
