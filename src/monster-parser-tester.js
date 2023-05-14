@@ -1,6 +1,7 @@
 import { BlockParser } from "./4-block-parser.js";
 import { BlockWriter } from "./5-block-writer.js";
 import { TextHandler } from "./3-text-handler.js";
+import { SrdBlockParser } from "./7-srd-block-parser.js";
 
 // Basic tests below
 const quickAddMock = {

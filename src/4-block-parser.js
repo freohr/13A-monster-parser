@@ -1,6 +1,6 @@
 import { Trait } from "./1-trait.js";
 import { Attack } from "./2-attack.js";
-import { helpers } from "./0-helpers.js";
+import { Helpers } from "./0-helpers.js";
 import { TextHandler } from "./3-text-handler.js";
 
 export class BlockParser {
@@ -153,7 +153,7 @@ export class BlockParser {
     };
 
     // First line is the monster name
-    monsterDescription.name = helpers.stringToPascalCase(
+    monsterDescription.name = Helpers.stringToPascalCase(
       this.#textHandler.currentLine
     );
     this.#textHandler.advanceIndex();
@@ -209,7 +209,7 @@ export class BlockParser {
           BlockParser.#vulnerabilityRegex
         ))
       ) {
-        monsterDescription.vulnerability = helpers.stringToPascalCase(
+        monsterDescription.vulnerability = Helpers.stringToPascalCase(
           lineMatch.groups.vulnerability
         );
       }

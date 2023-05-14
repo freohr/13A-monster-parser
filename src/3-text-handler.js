@@ -7,12 +7,17 @@ export class TextHandler {
     return new TextHandler(textBlock);
   }
 
-  constructor(textBlock) {
+  constructor(textBlock, removeWhiteSpace = true) {
     if (typeof textBlock === "string") {
-      this.#textArray = textBlock
-        .split("\n")
-        .filter((s) => s.length > 0)
-        .map((s) => s.trim());
+      let importedText = textBlock.split("\n");
+
+      if (removeWhiteSpace) {
+        importedText = importedText
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0);
+      }
+
+      this.#textArray = importedText;
     }
   }
 
