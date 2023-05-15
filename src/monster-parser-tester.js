@@ -275,5 +275,6 @@ console.log(srdParser.getMonsterDescription());
 console.log(srdParser.getMonsterAttacks());
 console.log(srdParser.getMonsterTraits());
 console.log(srdParser.getMonsterNastierSpecials());
+console.log(srdParser.getMonsterDefenses());
 
 console.log("hello");

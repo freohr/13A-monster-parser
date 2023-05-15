@@ -49,6 +49,18 @@ export class SrdBlockParser {
     return 11;
   }
 
+  static get #defensesRegex() {
+    return {
+      ac: /^AC/i,
+      pd: /^PD/i,
+      md: /^MD/i,
+      hp: /^HP/i,
+      anyDefense: /^(AC|PD|MD|HP)/i,
+      other: /^[^\d\s]+/,
+      value: /^(?<value>\d+)/,
+    };
+  }
+
   #placeTextAtStartOfBlock(startOfBlockRegex) {
     this.#textHandler.index = SrdBlockParser.#initiativeLineIndex;
     this.#textHandler.advanceIndex();
@@ -225,5 +237,51 @@ export class SrdBlockParser {
     }
 
     return traits;
+  }
+
+  getMonsterDefenses() {
+    const defenseRegexes = SrdBlockParser.#defensesRegex;
+
+    this.#placeTextAtStartOfBlock(defenseRegexes.ac);
+
+    // Some creature have predefined defenses based on their traits, so we need to catch them
+    let defenseNames = [],
+      defenseMatch;
+    do {
+      defenseNames.push(this.#textHandler.currentLine);
+      this.#textHandler.advanceIndex();
+
+      defenseMatch = this.#textHandler.currentLine.match(defenseRegexes.value);
+    } while (!defenseMatch);
+
+    let defenseValues = [];
+    while (!this.#textHandler.atEnd) {
+      defenseValues.push(this.#textHandler.currentLine);
+      this.#textHandler.advanceIndex();
+    }
+
+    defenseNames = defenseNames
+      .map((s) => s.trim())
+      .filter((s) => s.length !== 0)
+      .map((s) => s.toLowerCase());
+    defenseValues = defenseValues
+      .map((s) => s.trim())
+      .filter((s) => s.length !== 0);
+    const zip = (a, b) => a.map((k, i) => [k, b[i]]),
+      matchedDefenses = zip(defenseNames, defenseValues),
+      defenses = {};
+
+    matchedDefenses.forEach((elem, index) => {
+      const name = elem[0],
+        value = elem[1];
+      if (name.match(defenseRegexes.anyDefense)) {
+        defenses[name] = value;
+      } else {
+        const namePrevious = matchedDefenses[index - 1][0];
+        defenses[namePrevious] += ` [${name} ${value}]`;
+      }
+    });
+
+    return defenses;
   }
 }
