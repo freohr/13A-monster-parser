@@ -1,3 +1,5 @@
+import { Helpers } from "./0-helpers.js";
+
 export class BlockWriter {
     static #addIndentation(string) {
         return `      ${string}`;
@@ -41,10 +43,7 @@ export class BlockWriter {
 
     static #createSingleTraitBlock(trait) {
         const traitString = [];
-        traitString.push(
-            BlockWriter.#noIndentNameLine(trait.name),
-            BlockWriter.#noIndentDescLine(trait.description)
-        );
+        traitString.push(BlockWriter.#noIndentNameLine(trait.name), BlockWriter.#noIndentDescLine(trait.description));
         return traitString.join("\n");
     }
 
@@ -77,12 +76,13 @@ export class BlockWriter {
     }
 
     static writeAttacksBlock(blockStarter, attacks) {
-        const flatAttackArray = [attacks].flat();
+        if (Helpers.isEmpty(attacks))
+            return;
+
+            const flatAttackArray = [attacks].flat();
         const attackYAMLBlocks = [
             blockStarter,
-            ...flatAttackArray.map((attack) =>
-                BlockWriter.#createSingleAttackBlock(attack)
-            ),
+            ...flatAttackArray.map((attack) => BlockWriter.#createSingleAttackBlock(attack)),
         ];
 
         return attackYAMLBlocks.join("\n");
@@ -97,27 +97,28 @@ export class BlockWriter {
     }
 
     static writeTraitsBlock(blockStarter, traits) {
+        if (Helpers.isEmpty(traits))
+            return;
+
         const flatTraitArray = [traits].flat();
         const traitYAMLBlocks = [
             blockStarter,
-            ...flatTraitArray.map((attack) =>
-                BlockWriter.#createSingleTraitBlock(attack)
-            ),
+            ...flatTraitArray.map((attack) => BlockWriter.#createSingleTraitBlock(attack)),
         ];
 
         return traitYAMLBlocks.join("\n");
     }
 
     static #pushTrait(targetArray, traitName, traitValue) {
-        targetArray.push(`${traitName}: ${traitValue}`);
+        if (traitValue) {
+            targetArray.push(`${traitName}: ${traitValue}`);
+        }
     }
 
     static #writeObjectToYaml(statObject) {
         const outputYAMLArray = [];
 
-        Object.entries(statObject).map(([key, value]) =>
-            BlockWriter.#pushTrait(outputYAMLArray, key, value)
-        );
+        Object.entries(statObject).map(([key, value]) => BlockWriter.#pushTrait(outputYAMLArray, key, value));
 
         return outputYAMLArray.join("\n");
     }
@@ -128,5 +129,40 @@ export class BlockWriter {
 
     static writeDefenseBlock(defenseBlock) {
         return BlockWriter.#writeObjectToYaml(defenseBlock);
+    }
+
+    /**
+     *
+     * @param fullStatblock: FullStatBlock
+     * @returns {string}
+     */
+    static writeFullMonster(fullStatblock) {
+        const stringBlocks = [];
+
+        stringBlocks.push(
+            this.writeDescriptionBlock({
+                name: fullStatblock.name,
+                flavor_text: fullStatblock.flavor_text,
+                size: fullStatblock.size,
+                level: fullStatblock.level,
+                levelOrdinal: fullStatblock.levelOrdinal,
+                role: fullStatblock.role,
+                type: fullStatblock.type,
+                initiative: fullStatblock.initiative,
+                vulnerability: fullStatblock.vulnerability,
+            }),
+            this.writeStandardAttacksBlock(fullStatblock.attacks),
+            this.writeStandardTraitsBlock(fullStatblock.traits),
+            this.writeNastierTraitsBlock(fullStatblock.nastierTraits),
+            this.writeTriggeredAttacksBlock(fullStatblock.triggeredAttacks),
+            this.writeDefenseBlock({
+                ac: fullStatblock.ac,
+                pd: fullStatblock.pd,
+                md: fullStatblock.md,
+                hp: fullStatblock.hp,
+            })
+        );
+
+        return stringBlocks.filter(s => s).join("\n");
     }
 }

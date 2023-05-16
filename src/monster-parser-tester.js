@@ -171,7 +171,7 @@ HP
 const dragonSrdParser = new SrdBlockParser(dragonSrdText);
 
 console.log("\n/* --- Hoardsong Dragon --- */")
-console.log(dragonSrdParser.getFullMonster());
+console.log(BlockWriter.writeFullMonster(dragonSrdParser.getFullMonster()));
 
 /* --- Fire Giant --- */
 // - Attacks with traits
@@ -230,7 +230,7 @@ HP
 const fireGiantSrdParser = new SrdBlockParser(fireGiantSrdText);
 
 console.log("\n/* --- Fire Giant --- */")
-console.log(fireGiantSrdParser.getFullMonster());
+console.log(BlockWriter.writeFullMonster(fireGiantSrdParser.getFullMonster()));
 
 /* --- Greater Hoardsong Dragon --- */
 // - Attacks with traits
@@ -297,7 +297,7 @@ HP
 const greatDragonSrdParser = new SrdBlockParser(greatDragonSrdText);
 
 console.log("\n/* --- Greater Hoardsong Dragon --- */")
-console.log(greatDragonSrdParser.getFullMonster());
+console.log(BlockWriter.writeFullMonster(greatDragonSrdParser.getFullMonster()));
 
 // End
 console.log("hello");
