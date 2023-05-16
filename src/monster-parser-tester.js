@@ -104,8 +104,14 @@ console.log(BlockWriter.writeDefenseBlock(parsedDefenses));
 
 */
 
-
 // Test on SRD output
+
+/* --- Hoardsong Dragon --- */
+// Vulnerability in Desc
+// - Attacks with traits
+// - Traits
+// - Nastier Specials
+// - A trait with a triggered Attack
 const dragonSrdText = `Hoardsong Dragon (Red)
 
 Large
@@ -162,7 +168,75 @@ HP
 18
 
 360`;
+const dragonSrdParser = new SrdBlockParser(dragonSrdText);
 
+console.log("\n/* --- Hoardsong Dragon --- */")
+console.log(dragonSrdParser.getFullMonster());
+
+/* --- Fire Giant --- */
+// - Attacks with traits
+// - Traits
+// - Nastier Specials
+// - A trait with a triggered Attack
+const fireGiantSrdText = `Fire Giant
+
+Large
+
+8th level
+
+Wrecker
+
+Giant
+\t
+
+Initiative: +12
+Vulnerability: cold
+
+Flaming greatsword +13 vs. AC (2 attacks) — 35 damage
+ Natural even hit or miss: The target also takes 10 ongoing fire damage.
+
+R: Flaming black-iron javelin +11 vs. AC — 40 damage
+ Natural even hit or miss: The target also takes 10 ongoing fire damage.
+
+Fiery escalator: The fire giant adds the escalation die to its attacks against targets taking ongoing fire damage.
+
+Resist fire 16+: When a fire attack targets this creature, the attacker must roll a natural 16+ on the attack roll or it only deals half damage.
+
+Nastier Specials
+
+Burning blood: When a fire giant becomes staggered, it deals 10 ongoing fire damage to each enemy engaged with it.
+
+Strength of giants: Twice per battle, the giant can make a slam attack as a quick action (once per round).
+
+Slam +12 vs. PD (one enemy smaller than it) — 10 damage, the target pops free from the giant, and the target loses its next move action
+\t
+
+AC
+
+PD
+
+MD
+
+HP
+\t
+
+25
+
+21
+
+17
+
+285`;
+const fireGiantSrdParser = new SrdBlockParser(fireGiantSrdText);
+
+console.log("\n/* --- Fire Giant --- */")
+console.log(fireGiantSrdParser.getFullMonster());
+
+/* --- Greater Hoardsong Dragon --- */
+// - Attacks with traits
+// - Traits
+// - Nastier Specials
+// - A specificied defense
 const greatDragonSrdText = `Greathoard Elder (Red)
 
 Huge
@@ -220,61 +294,10 @@ HP
 20
 
 870`;
+const greatDragonSrdParser = new SrdBlockParser(greatDragonSrdText);
 
-const fireGiantText = `Large
+console.log("\n/* --- Greater Hoardsong Dragon --- */")
+console.log(greatDragonSrdParser.getFullMonster());
 
-8th level
-
-Wrecker
-
-Giant
-\t
-
-Initiative: +12
-Vulnerability: cold
-
-Flaming greatsword +13 vs. AC (2 attacks) — 35 damage
- Natural even hit or miss: The target also takes 10 ongoing fire damage.
-
-R: Flaming black-iron javelin +11 vs. AC — 40 damage
- Natural even hit or miss: The target also takes 10 ongoing fire damage.
-
-Fiery escalator: The fire giant adds the escalation die to its attacks against targets taking ongoing fire damage.
-
-Resist fire 16+: When a fire attack targets this creature, the attacker must roll a natural 16+ on the attack roll or it only deals half damage.
-
-Nastier Specials
-
-Burning blood: When a fire giant becomes staggered, it deals 10 ongoing fire damage to each enemy engaged with it.
-
-Strength of giants: Twice per battle, the giant can make a slam attack as a quick action (once per round).
-
-Slam +12 vs. PD (one enemy smaller than it) — 10 damage, the target pops free from the giant, and the target loses its next move action
-\t
-
-AC
-
-PD
-
-MD
-
-HP
-\t
-
-25
-
-21
-
-17
-
-285`
-
-const srdParser = new SrdBlockParser(greatDragonSrdText);
-
-console.log(srdParser.getMonsterDescription());
-console.log(srdParser.getMonsterAttacks());
-console.log(srdParser.getMonsterTraits());
-console.log(srdParser.getMonsterNastierSpecials());
-console.log(srdParser.getMonsterDefenses());
-
+// End
 console.log("hello");

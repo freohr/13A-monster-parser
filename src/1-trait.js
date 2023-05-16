@@ -19,4 +19,8 @@ export class Trait {
     get description() {
         return this.#description;
     }
+
+    set description(text) {
+        this.#description = text;
+    }
 }
