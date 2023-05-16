@@ -12,6 +12,6 @@
     "src/4-block-parser.js",
     "src/5-block-writer.js",
     "src/monster-parser-tester.js",
-    "assets/scripts/monster-parser.js"
+    "assets/scripts/13A-monster-parser.js"
   ]
 }

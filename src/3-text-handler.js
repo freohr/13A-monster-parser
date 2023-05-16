@@ -1,48 +1,48 @@
 export class TextHandler {
-  #textArray = [];
-  #currentIndex = 0;
+    #textArray = [];
+    #currentIndex = 0;
 
-  // Static Factory to enable creating Objects with CustomJS plugin
-  static create(textBlock) {
-    return new TextHandler(textBlock);
-  }
-
-  constructor(textBlock, removeWhiteSpace = true) {
-    if (typeof textBlock === "string") {
-      let importedText = textBlock.split("\n");
-
-      if (removeWhiteSpace) {
-        importedText = importedText
-          .map((s) => s.trim())
-          .filter((s) => s.length > 0);
-      }
-
-      this.#textArray = importedText;
+    // Static Factory to enable creating Objects with CustomJS plugin
+    static create(textBlock) {
+        return new TextHandler(textBlock);
     }
-  }
 
-  reset() {
-    this.#textArray = [];
-    this.#currentIndex = 0;
-  }
+    constructor(textBlock, removeWhiteSpace = true) {
+        if (typeof textBlock === "string") {
+            let importedText = textBlock.split("\n");
 
-  get atEnd() {
-    return this.#currentIndex >= this.#textArray.length;
-  }
+            if (removeWhiteSpace) {
+                importedText = importedText
+                    .map((s) => s.trim())
+                    .filter((s) => s.length > 0);
+            }
 
-  get currentLine() {
-    return this.#textArray[this.#currentIndex];
-  }
+            this.#textArray = importedText;
+        }
+    }
 
-  get index() {
-    return this.#currentIndex;
-  }
+    reset() {
+        this.#textArray = [];
+        this.#currentIndex = 0;
+    }
 
-  set index(i) {
-    this.#currentIndex = i;
-  }
+    get atEnd() {
+        return this.#currentIndex >= this.#textArray.length;
+    }
 
-  advanceIndex(i = 1) {
-    this.index += i;
-  }
+    get currentLine() {
+        return this.#textArray[this.#currentIndex];
+    }
+
+    get index() {
+        return this.#currentIndex;
+    }
+
+    set index(i) {
+        this.#currentIndex = i;
+    }
+
+    advanceIndex(i = 1) {
+        this.index += i;
+    }
 }

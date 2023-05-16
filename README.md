@@ -23,11 +23,11 @@ This repo does not include any actual statblocks, the tools within are to be use
 ```
 assets
   |- scripts
-  |   |- monster-parser.js
+  |   |- 13A-monster-parser.js
   |- templates
       |- monster-statblock-parser.md
 ```
-3. In the **CustomJS** config, in the `Individual Files` field, put `[/path/from/vault/root]/assets/scripts/monster-parser.js` (or the path you've chosen pointing to the parser's JS file)
+3. In the **CustomJS** config, in the `Individual Files` field, put `[/path/from/vault/root]/assets/scripts/13A-monster-parser.js` (or the path you've chosen pointing to the parser's JS file)
 4. In the **QuickAdd** config:
    1. Put the path to your template folder (containing the template from this repo) in the `Template Folder Path` field
    2. Create a `Template` choice, named however you want (e.g. `13th Age Monster Parser`)
