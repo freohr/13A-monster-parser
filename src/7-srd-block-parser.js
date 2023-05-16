@@ -279,6 +279,7 @@ export class SrdBlockParser {
             description.level,
             description.levelOrdinal,
             description.role,
+            description.type,
             description.initiative,
             description.vulnerability
         );
