@@ -299,5 +299,64 @@ const greatDragonSrdParser = new SrdBlockParser(greatDragonSrdText);
 console.log("\n/* --- Greater Hoardsong Dragon --- */")
 console.log(BlockWriter.writeFullMonster(greatDragonSrdParser.getFullMonster()));
 
+/* --- Empyrean Dragon --- */
+// - Attacks with traits
+// - Special Trigger Attacks
+// - Traits
+// - Nastier Specials
+// - a Trait with 2 paragraphs
+const empyreanDragonSrdText = `Empyrean Dragon (Black)
+
+Huge
+
+9th level
+
+Spoiler
+
+Dragon
+\t
+
+Initiative: +17
+
+Gleaming bite +14 vs. AC — 50 damage, and one effect triggers based on the head that attacks (GM’s choice)
+ Head 1: The target can’t use recoveries until end of its next turn.
+ Head 2: One enemy that hit the dragon since the dragon’s last turn takes 12 damage.
+ Head 3: The target moves to a nearby non-harmful location of the dragon’s choice as a free action. This movement can provoke opportunity attacks.
+
+C: Venom breath +13 vs. PD (1d3 + 1 nearby enemies) — 35 damage
+ Swarming motes: Each time the dragon uses this attack, a swarm of light motes that resolve into scorpions and stinging insects swirl around the targets. The swarm harasses each targeted enemy, hit or miss. During its next turn, any enemy being swarmed this way must choose one: Take 25 damage; OR roll twice for each attack roll it makes that turn, taking the lower result.
+
+[Special trigger] C: Crying heavens +13 vs. MD (each enemy in the battle) — 20 ongoing damage
+ Miss: 10 ongoing damage.
+ Temporal manastorm: The empyrean dragon’s connection to the overworld falters, creating a storm of distorted time and magic in the area. The dragon’s critical hit range for all attacks expands by 2 until the end of the battle. In addition, when a target saves against the ongoing damage from this attack, the crit range of its attacks against the dragon expands by 1 until the end of the battle.
+ Limited use: 1/battle, as a free action when first staggered.
+
+Three heads are better than one: The empyrean dragon can make two gleaming bite attacks as a single standard action, one each from two heads. The third head is assumed to be maneuvering the body around. It can choose not to make one of those attacks to end any condition affecting it except for ongoing damage (this includes the stunned condition, even though it technically doesn’t get an action when stunned).
+ An enemy who scores a critical hit against an empyrean dragon can forego the extra damage to lop off one of the dragon’s heads. If an enemy deals 150 damage with a single attack against the dragon, the attack will also remove a head. An empyrean dragon with two remaining heads can make only one gleaming bite attack as a standard action and can’t sacrifice that attack to remove conditions. The dragon dies if all three heads are removed.
+
+Intermittent breath: An empyrean dragon can use venom breath 1d2 + 1 times per battle, but never two turns in a row.
+\t
+
+AC
+
+PD
+
+MD
+
+HP
+\t
+
+25
+
+23
+
+21
+
+510`
+const empyreanDragonParser = new SrdBlockParser(empyreanDragonSrdText);
+
+console.log("\n/* --- Empyrean Dragon --- */")
+console.log(BlockWriter.writeFullMonster(empyreanDragonParser.getFullMonster()));
+
 // End
 console.log("hello");

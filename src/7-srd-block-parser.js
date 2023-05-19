@@ -26,6 +26,10 @@ export class SrdBlockParser {
         return /^(?! )(?<trait_name>.+)(?<![RC]): (?<trait_desc>.*)/;
     }
 
+    static get #followUpRegex() {
+        return /^ (?<follow_up>.*)/;
+    }
+
     static get #nastierHeaderRegex() {
         return /^Nastier Specials$/;
     }
@@ -178,9 +182,13 @@ export class SrdBlockParser {
             nastierSpecials = { traits: [] };
 
         let currentTraitCategory = traits;
+        let lastModifiedItem;
 
-        while (!this.#textHandler.currentLine.match(SrdBlockParser.#blockSeparator)) {
-            const currentLine = this.#textHandler.currentLine;
+        let currentLine;
+        while (((currentLine = this.#textHandler.currentLine), !currentLine.match(SrdBlockParser.#blockSeparator))) {
+            if (currentLine.match(SrdBlockParser.#blockSeparator)) {
+                break;
+            }
 
             if (Helpers.isEmpty(currentLine)) {
                 this.#textHandler.advanceIndex();
@@ -189,31 +197,25 @@ export class SrdBlockParser {
 
             let currentMatch;
             if ((currentMatch = currentLine.match(SrdBlockParser.#traitStarterRegex))) {
-                currentTraitCategory.traits.push(
-                    new Trait(currentMatch.groups.trait_name, currentMatch.groups.trait_desc)
-                );
+                lastModifiedItem = new Trait(currentMatch.groups.trait_name, currentMatch.groups.trait_desc);
+                currentTraitCategory.traits.push(lastModifiedItem);
             } else if ((currentMatch = currentLine.match(SrdBlockParser.#nastierHeaderRegex))) {
                 currentTraitCategory = nastierSpecials;
             } else if ((currentMatch = currentLine.match(SrdBlockParser.#attackStarterRegex))) {
-                const attack = new Attack(currentMatch.groups.attack_name, currentMatch.groups.attack_desc);
-                this.#textHandler.advanceIndex();
-                while ((currentMatch = currentLine.match(SrdBlockParser.#attackTraitStarterRegex))) {
-                    attack.traits.push(new Trait(currentMatch.groups.trait_name, currentMatch.groups.trait_desc));
-                    this.#textHandler.advanceIndex();
+                lastModifiedItem = new Attack(currentMatch.groups.attack_name, currentMatch.groups.attack_desc);
+                triggeredAttacks.push(lastModifiedItem);
+            } else if ((currentMatch = currentLine.match(SrdBlockParser.#attackTraitStarterRegex))) {
+                if (lastModifiedItem && lastModifiedItem instanceof Attack) {
+                    lastModifiedItem.traits.push(
+                        new Trait(currentMatch.groups.trait_name, currentMatch.groups.trait_desc)
+                    );
                 }
-                triggeredAttacks.push(attack);
-            } else if (!Helpers.isEmpty(currentLine)) {
-                const currentTraitDesc =
-                    currentTraitCategory.traits[currentTraitCategory.traits.length - 1].description;
-                [currentTraitDesc, currentLine].join(" ");
-                currentTraitCategory.traits[currentTraitCategory.traits.length - 1].description = [
-                    currentTraitDesc,
-                    currentLine,
-                ].join(" ");
-            }
+            } else if ((currentMatch = currentLine.match(SrdBlockParser.#followUpRegex))) {
+                const follow_up = currentMatch.groups.follow_up;
 
-            if (this.#textHandler.currentLine.match(SrdBlockParser.#blockSeparator)) {
-                break;
+                if (lastModifiedItem) {
+                    lastModifiedItem.description = [lastModifiedItem.description, follow_up].join("<br/>");
+                }
             }
             this.#textHandler.advanceIndex();
         }
@@ -285,13 +287,13 @@ export class SrdBlockParser {
         );
 
         const attacks = this.getMonsterAttacks();
-        monsterData.attacks.push(...(attacks.attacks));
-        monsterData.triggeredAttacks.push(...(attacks.triggeredAttacks));
+        monsterData.attacks.push(...attacks.attacks);
+        monsterData.triggeredAttacks.push(...attacks.triggeredAttacks);
 
         const traits = this.getMonsterTraits();
-        monsterData.traits.push(...(traits.traits));
-        monsterData.nastierTraits.push(...(traits.nastierTraits));
-        monsterData.triggeredAttacks.push(...(traits.triggeredAttacks));
+        monsterData.traits.push(...traits.traits);
+        monsterData.nastierTraits.push(...traits.nastierTraits);
+        monsterData.triggeredAttacks.push(...traits.triggeredAttacks);
 
         const defenses = this.getMonsterDefenses();
         monsterData.ac = defenses.ac;
