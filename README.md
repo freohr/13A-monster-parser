@@ -47,7 +47,24 @@ assets
    1. If you're prepping for a 13th Age campaign, I suggest putting the `Default Layout` config to `Basic 13th Age Monster Layout` so that you don't have to add the `layout: Basic 13th Age Monster Layout` line to your statblock YAML config everytime.
    2. For the rest, the module can do a lot more than just rendering statblocks, so configure it to your needs and liking.
 
+Example of QuickAdd config: ![](readme/quick-add-config.png)
+
 ### Parsing a monster
+
+#### From the SRD
+
+First, 
+
+Then, setup CustomJS and QuickAdd following the [instructions](#first-setup). For QuickAdd, there are 2 options provided:
+
+1. manually Copy/Paste the raw text from the page in your browser -> Use [13A-srd-monster-statblock-parser.md](assets/templates/13A-srd-monster-statblock-parser.md) as the QuickAdd template
+2. After downloading [the full page of monsters](https://www.13thagesrd.com/monsters) (I recommend using https://github.com/deathau/markdownload which will retain the HTML for the monster's table), copy/paste the HTML code for the monster -> Use  [13A-srd-monster-statblock-html-parser.md](assets/templates/13A-srd-monster-statblock-html-parser.md) as the QuickAdd template
+
+Then, you can trigger QuickAdd to create a new note using the option you just created.
+
+Here's an example of import from the SRD's HTML: ![Example of import from SRD's HTML](readme/parse-dragon-from-html-table.mp4)
+
+#### From a PDF (1st or 3rd Party)
 
 For now, the parser only exists as a minimalist set of prompters. In order, the parser will prompt you for:
 

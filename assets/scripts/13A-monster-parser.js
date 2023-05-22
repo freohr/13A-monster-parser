@@ -422,7 +422,7 @@ class Parser13AMonster {
         static #pushTrait(targetArray, traitName, traitValue) {
             if (!traitValue) return;
 
-            targetArray.push(`${traitName}: ${traitValue}`);
+            targetArray.push(`${traitName}: "${traitValue}"`);
         }
 
         static #writeObjectToYaml(statObject) {
