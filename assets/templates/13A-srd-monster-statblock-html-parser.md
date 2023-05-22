@@ -12,8 +12,9 @@ layout: Basic 13th Age Monster Layout
 columns: 1
 {{VALUE:fullBlock}}
 ```
+
 ```js quickadd
 const prompter = new customJS.Parser13AMonster.QuickAddPrompter(this)
 console.log(this);
-this.variables["fullBlock"] = await prompter.promptSrdBlockParser();
+this.variables["fullBlock"] = await prompter.promptSrdHtmlParser();
 ```
