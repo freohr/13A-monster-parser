@@ -62,7 +62,9 @@ Then, setup CustomJS and QuickAdd following the [instructions](#first-setup). Fo
 
 Then, you can trigger QuickAdd to create a new note using the option you just created.
 
-Here's an example of import from the SRD's HTML: ![Example of import from SRD's HTML](readme/parse-dragon-from-html-table.mp4)
+Here's an example of import from the SRD's HTML:
+
+https://github.com/freohr/obsidian-13A-monster-parser/assets/3462951/0212c851-c3ea-47e5-a98e-a3b76dae2476
 
 #### From a PDF (1st or 3rd Party)
 
