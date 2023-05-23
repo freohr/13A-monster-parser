@@ -1,3 +1,23 @@
+class Helpers {
+    static stringToPascalCase(string) {
+        const allWords = string.split(" ");
+        const capitalizedWords = allWords.map((s) =>
+            s.replace(
+                /(\w)(\w*)/g,
+                (g0, g1, g2) => g1.toUpperCase() + g2.toLowerCase()
+            )
+        );
+
+        return capitalizedWords.join(" ");
+    }
+
+    static isEmpty(stuff) {
+        if (stuff === undefined) return true;
+        if (Array.isArray(stuff) && stuff.length === 0) return true;
+        if (typeof stuff === "string" && stuff.length === 0) return true;
+        return Object.entries(stuff).length === 0;
+    }
+}
 Trait = class Trait {
     #name = "";
     #description = "";
@@ -258,6 +278,173 @@ FullStatBlock = class FullStatBlock {
     }
 };
 
+BlockWriter = class BlockWriter {
+    static #addIndentation(string) {
+        return `      ${string}`;
+    }
+
+    static #attackHeaderLine = `actions:`;
+    static get attackHeaderLine() {
+        return this.#attackHeaderLine;
+    }
+
+    static #traitsHeaderLine = `traits:`;
+    static get traitsHeaderLine() {
+        return this.#traitsHeaderLine;
+    }
+
+    static get attackTraitsHeaderLine() {
+        return this.#addIndentation(this.traitsHeaderLine);
+    }
+
+    static #triggersHeaderLine = `triggered_actions:`;
+    static get triggersHeaderLine() {
+        return this.#triggersHeaderLine;
+    }
+
+    static #nastiersHeaderLine = `nastier_traits:`;
+    static get nastiersHeaderLine() {
+        return this.#nastiersHeaderLine;
+    }
+
+    // internal helpers
+    static #noIndentNameLine = (name) => `    - name: \"${name}\"`;
+    static #noIndentDescLine = (desc) => `      desc: \"${desc}\"`;
+
+    static #attackTraitNameLine(name) {
+        return this.#addIndentation(this.#noIndentNameLine(name));
+    }
+
+    static #attackTraitDescLine(desc) {
+        return this.#addIndentation(this.#noIndentDescLine(desc));
+    }
+
+    static #createSingleTraitBlock(trait) {
+        const traitString = [];
+        traitString.push(BlockWriter.#noIndentNameLine(trait.name), BlockWriter.#noIndentDescLine(trait.description));
+        return traitString.join("\n");
+    }
+
+    static #createSingleAttackBlock(attack) {
+        const attackStrings = [];
+        attackStrings.push(
+            BlockWriter.#noIndentNameLine(attack.name),
+            BlockWriter.#noIndentDescLine(attack.description)
+        );
+
+        if (attack.traits && attack.traits.length > 0) {
+            attackStrings.push(BlockWriter.attackTraitsHeaderLine);
+            attack.traits.forEach((trait) =>
+                attackStrings.push(
+                    BlockWriter.#attackTraitNameLine(trait.name),
+                    BlockWriter.#attackTraitDescLine(trait.description)
+                )
+            );
+        }
+
+        return attackStrings.join("\n");
+    }
+
+    static writeStandardAttacksBlock(attacks) {
+        return this.writeAttacksBlock(this.attackHeaderLine, attacks);
+    }
+
+    static writeTriggeredAttacksBlock(attacks) {
+        return this.writeAttacksBlock(this.triggersHeaderLine, attacks);
+    }
+
+    static writeAttacksBlock(blockStarter, attacks) {
+        if (Helpers.isEmpty(attacks))
+            return;
+
+        const flatAttackArray = [attacks].flat();
+        const attackYAMLBlocks = [
+            blockStarter,
+            ...flatAttackArray.map((attack) => BlockWriter.#createSingleAttackBlock(attack)),
+        ];
+
+        return attackYAMLBlocks.join("\n");
+    }
+
+    static writeStandardTraitsBlock(traits) {
+        return this.writeTraitsBlock(this.traitsHeaderLine, traits);
+    }
+
+    static writeNastierTraitsBlock(traits) {
+        return this.writeTraitsBlock(this.nastiersHeaderLine, traits);
+    }
+
+    static writeTraitsBlock(blockStarter, traits) {
+        if (Helpers.isEmpty(traits))
+            return;
+
+        const flatTraitArray = [traits].flat();
+        const traitYAMLBlocks = [
+            blockStarter,
+            ...flatTraitArray.map((attack) => BlockWriter.#createSingleTraitBlock(attack)),
+        ];
+
+        return traitYAMLBlocks.join("\n");
+    }
+
+    static #pushTrait(targetArray, traitName, traitValue) {
+        if (traitValue) {
+            targetArray.push(`${traitName}: ${traitValue}`);
+        }
+    }
+
+    static #writeObjectToYaml(statObject) {
+        const outputYAMLArray = [];
+
+        Object.entries(statObject).map(([key, value]) => BlockWriter.#pushTrait(outputYAMLArray, key, value));
+
+        return outputYAMLArray.join("\n");
+    }
+
+    static writeDescriptionBlock(descriptionBlock) {
+        return BlockWriter.#writeObjectToYaml(descriptionBlock);
+    }
+
+    static writeDefenseBlock(defenseBlock) {
+        return BlockWriter.#writeObjectToYaml(defenseBlock);
+    }
+
+    /**
+     *
+     * @param fullStatblock: FullStatBlock
+     * @returns {string}
+     */
+    static writeFullMonster(fullStatblock) {
+        const stringBlocks = [];
+
+        stringBlocks.push(
+            this.writeDescriptionBlock({
+                name: fullStatblock.name,
+                flavor_text: fullStatblock.flavor_text,
+                size: fullStatblock.size,
+                level: fullStatblock.level,
+                levelOrdinal: fullStatblock.levelOrdinal,
+                role: fullStatblock.role,
+                type: fullStatblock.type,
+                initiative: fullStatblock.initiative,
+                vulnerability: fullStatblock.vulnerability,
+            }),
+            this.writeStandardAttacksBlock(fullStatblock.attacks),
+            this.writeStandardTraitsBlock(fullStatblock.traits),
+            this.writeNastierTraitsBlock(fullStatblock.nastierTraits),
+            this.writeTriggeredAttacksBlock(fullStatblock.triggeredAttacks),
+            this.writeDefenseBlock({
+                ac: fullStatblock.ac,
+                pd: fullStatblock.pd,
+                md: fullStatblock.md,
+                hp: fullStatblock.hp,
+            })
+        );
+
+        return stringBlocks.filter(s => s).join("\n");
+    }
+}
+
 class SrdHtmlParser {
     /**
      * @type HTMLTableRowElement
@@ -384,8 +571,8 @@ class SrdHtmlParser {
             defenseValues = [];
 
         for (let i = 0; i < defenseNameWrapper.length; i++) {
-            defenseNames.push(defenseNameWrapper[i].firstElementChild.innerText.toLowerCase());
-            defenseValues.push(defenseValueWrapper[i].firstElementChild.innerText);
+            defenseNames.push(defenseNameWrapper[i].innerText.toLowerCase());
+            defenseValues.push(defenseValueWrapper[i].innerText);
         }
 
         const zip = (a, b) => a.map((k, i) => [k, b[i]]),
@@ -474,34 +661,3 @@ class SrdHtmlParser {
         return monsterData;
     }
 }
-
-// SRD HTML Parser
-/*
-const pitFiendHtmlText = `<table><tbody><tr><td><p><b>Huge</b></p><p><b>14<sup>th</sup>&nbsp;level</b></p><p><b>Wrecker</b></p><p><b>Devil</b></p></td><td><p>Initiative: +19</p><p><b>Fiendish weapon +19 vs. AC (2 attacks)</b> — 140 damage, and until the end of the battle the target takes a –2 penalty to attacks, defenses, and level-based d20 rolls. Hit points, feats, weapon damage, and other level-based benefits don’t change. (The penalty isn’t cumulative.)<br> <i>Natural 11+:</i> The pit fiend can make an <i>entangling tail</i> attack against a different target as a free action.<br> <i>Both attacks hit:</i> The pit fiend can use <i>fiendish vigor</i> as a free action.</p><p><b>Entangling tail +19 vs. PD</b> — 40 damage, and the target is hampered until the end of its next turn or until the pit fiend makes another <i>entangling tail</i> attack.</p><p><b>R: Burst of hellfire +19 vs. PD (up to 3 nearby or far away enemies in a group)</b> — 120 fire damage<br> <i>Miss:</i> Half damage.</p><p><b>C: Black utterance of denial +19 vs. MD (each enemy engaged with the pit fiend)</b> — The target is hampered until the end of its next turn<br> <i>Limited use:</i> 1/battle, as a quick action.</p><p><i>Devil’s due (Menace):</i> When you choose to add the escalation die to an attack against a pit fiend, the escalation die does not increase at the start of the next round. Special circumstances and PC powers can still increase it.</p><p><i>Fiendish vigor:</i> As a standard action, the pit fiend can heal 300 hp and roll a save against each ongoing effect on it. It can use <i>fiendish vigor</i> up to five times per battle.</p><p><i>Flight:</i> Amidst wind and flames, a pit fiend can fly with surprising agility.</p><p><i>Resist fire 13+:</i> When a fire attack targets this creature, the attacker must roll a natural 13+ on the attack roll or it only deals half damage.</p><p><span>Nastier Specials</span></p><p><i>Cloak of fire:</i> When a creature is engaged with the pit fiend at the start of its turn, that creature takes 20 fire damage.</p></td><td><p><b>AC</b></p><p><b>PD</b></p><p><b>MD</b></p><p><b>HP</b></p></td><td><p><b>29</b></p><p><b>27</b></p><p><b>27</b></p><p><b>1600</b></p></td></tr></tbody></table>`;
-const pitFiendParser = new SrdHtmlParser(pitFiendHtmlText);
-console.log("--- Pit Fiend");
-console.log(pitFiendParser.getFullMonster());
-
-const fangDevilText = `<table><tbody><tr><td><p><b>Huge</b></p><p><b>7<sup>th</sup>&nbsp;level</b></p><p><b>Spoiler</b></p><p><b>Devil</b></p></td><td><p>Initiative: +13</p><p><b>Mighty tentacles +12 vs. PD (2 attacks; can target nearby enemies)</b> — 20 damage<br> <i>Natural even hit:</i> The target pops free from each enemy and moves next to the Devil, which engages and grabs it. (The Devil can grab any number of enemies simultaneously.) If it has quick actions left, it will use its <i>devil’s beak</i> and <i>cutting talon</i> attacks.<br> <i>Miss:</i> 10 damage.</p><p><b>Cutting talon +12 (+16 against a grabbed enemy) vs. AC</b> — 40 damage<br> <i>Natural even hit:</i> The target also takes 20 ongoing damage.<br> <i>Natural odd miss:</i> 20 ongoing damage.<br> <i>Quick use:</i> This ability only requires a quick action (once per round) to use.</p><p><i>[Special trigger]</i> <b>Devil’s beak +16 vs. AC (one enemy it’s grabbing; includes +4 grab bonus)</b> — 30 damage<br> <i>Miss:</i> 15 damage.<br> <i>Quick use:</i> This ability only requires a quick action (once per round) to use.</p><p><i>Devil’s due (Trouble):</i> When you choose to add the escalation die to an attack against the Fang Devil, you are hampered until the end of your next turn after you make the attack.</p><p><i>Resist energy 13+:</i> When an energy attack targets this creature, the attacker must roll a natural 13+ on the attack roll or it only deals half damage.</p></td><td><p><b>AC</b></p><p><b>PD</b></p><p><b>MD</b></p><p><b>HP</b></p></td><td><p><b>22</b></p><p><b>22</b></p><p><b>22</b></p><p><b>360</b></p></td></tr></tbody></table>`;
-const fangDevilParser = new SrdHtmlParser(fangDevilText);
-console.log("--- Fang Devil");
-console.log(fangDevilParser.getFullMonster());
-
-const empyreanDragontext = `<table><tbody><tr><td><p><b>Huge</b></p><p><b>9<sup>th</sup>&nbsp;level</b></p><p><b>Spoiler</b></p><p><b>Dragon</b></p></td><td><p>Initiative: +17</p><p><b>Gleaming bite +14 vs. AC</b> — 50 damage, and one effect triggers based on the head that attacks (GM’s choice)<br> <i>Head 1:</i> The target can’t use recoveries until end of its next turn.<br> <i>Head 2:</i> One enemy that hit the dragon since the dragon’s last turn takes 12 damage.<br> <i>Head 3:</i> The target moves to a nearby non-harmful location of the dragon’s choice as a free action. This movement can provoke opportunity attacks.</p><p><b>C: Venom breath +13 vs. PD (1d3 + 1 nearby enemies)</b> — 35 damage<br> <i>Swarming motes:</i> Each time the dragon uses this attack, a swarm of light motes that resolve into scorpions and stinging insects swirl around the targets. The swarm harasses each targeted enemy, hit or miss. During its next turn, any enemy being swarmed this way must choose one: Take 25 damage; OR roll twice for each attack roll it makes that turn, taking the lower result.</p><p><i>[Special trigger]</i> <b>C: Crying heavens +13 vs. MD (each enemy in the battle)</b> — 20 ongoing damage<br> <i>Miss:</i> 10 ongoing damage.<br> <i>Temporal manastorm:</i> The empyrean dragon’s connection to the overworld falters, creating a storm of distorted time and magic in the area. The dragon’s critical hit range for all attacks expands by 2 until the end of the battle. In addition, when a target saves against the ongoing damage from this attack, the crit range of its attacks against the dragon expands by 1 until the end of the battle.<br> <i>Limited use:</i> 1/battle, as a free action when first staggered.</p><p><i>Three heads are better than one:</i> The empyrean dragon can make two <i>gleaming bite</i> attacks as a single standard action, one each from two heads. The third head is assumed to be maneuvering the body around. It can choose not to make one of those attacks to end any condition affecting it except for ongoing damage (this includes the stunned condition, even though it technically doesn’t get an action when stunned).<br> An enemy who scores a critical hit against an empyrean dragon can forego the extra damage to lop off one of the dragon’s heads. If an enemy deals 150 damage with a single attack against the dragon, the attack will also remove a head. An empyrean dragon with two remaining heads can make only one <i>gleaming bite</i> attack as a standard action and can’t sacrifice that attack to remove conditions. The dragon dies if all three heads are removed.</p><p><i>Intermittent breath:</i> An empyrean dragon can use <i>venom breath</i> 1d2 + 1 times per battle, but never two turns in a row.</p></td><td><p><b>AC</b></p><p><b>PD</b></p><p><b>MD</b></p><p><b>HP</b></p></td><td><p><b>25</b></p><p><b>23</b></p><p><b>21</b></p><p><b>510</b></p></td></tr></tbody></`;
-const dragonParser = new SrdHtmlParser(empyreanDragontext);
-console.log("--- Empyrean Dragon");
-console.log(dragonParser.getFullMonster());
-
-const gorgeDragonText = `<table><tbody><tr><td><p><b>Large</b></p><p><b>5<sup>th</sup>&nbsp;level</b></p><p><b>Spoiler</b></p><p><b>Dragon</b></p></td><td><p>Initiative: +13<br>Vulnerability: fire</p><p><b>Coiling +10 vs. PD</b> — 18 damage, and the dragon grabs the target; while grabbed, the target takes 9 damage at the start of each of its turns<br> <i>Natural 5, 10, 15, or 20:</i> The dragon regains the use of its <i>dazzling breath</i> if it’s expended and can use it during its next turn.</p><p><b>Bite +13 (includes grab bonus) vs. AC (one enemy it’s grabbing)</b> — 25 damage<br> <i>Natural 16+:</i> The target takes no damage and is instead <i>swallowed whole</i> (see below).<br> <i>Limited use:</i> 1/round, as a free action.</p><p><b>C: Dazzling breath +9 vs. MD (1d3 nearby enemies)</b> — 14 damage, and if the target has 40 HP or fewer after being hit, it’s weakened until the end of its next turn<br> <i>Limited use:</i> 1/battle, as a quick action.</p><p><i>Swallowed whole:</i> A creature that is swallowed whole must start making last gasp saves during its next turn. An ally can assist with the save as normal, but the save remains hard (16+) in that case. A roll of 16–19 causes the creature to be regurgitated from the dragon’s gut, while a 20 means that the creature cuts/rips a hole through the dragon’s flesh to escape (dealing basic attack damage automatically).</p><p><i>Chain constrictor:</i> The gorge dragon can have up to two enemies grabbed at the same time.</p><p><i>Resist cold 14+:</i> When a cold attack targets this creature, the attacker must roll a natural 14+ on the attack roll or it only deals half damage.</p><p><i>Water-breathing:</i> Gorge dragons swim well and can breathe underwater.</p></td><td><p><b>AC</b></p><p><b>PD</b></p><p><b>MD</b></p><p><b>HP</b></p></td><td><p><b>21</b></p><p><b>19</b></p><p><b>17</b></p><p><b>164</b></p></td></tr></tbody></table>`
-const gorgeDragonParser = new SrdHtmlParser(gorgeDragonText);
-console.log("--- Gorge Dragon");
-console.log(gorgeDragonParser.getFullMonster());
-*/
-
-const cenotapheDragonText =  `<table><tbody><tr><td><p><b>Normal</b></p><p><b>3<sup>rd</sup>&nbsp;level</b></p><p><b>Troop</b></p><p><b>Dragon</b></p></td><td><p>Initiative: +8<br>Vulnerability: fire</p><p><b>Claws and bite +7 vs. AC (2 attacks)</b> — 6 damage<br> <i>Natural 16+:</i> The cenotaph dragon can make an <i>infused ice breath</i> attack as a free action.</p><p><i>[Special trigger]</i> <b>C: Infused ice breath +7 vs. PD (1d3 nearby enemies)</b> — 6 cold damage<br> <i>Natural 20:</i> The target also takes 5 ongoing holy damage (in addition to double damage for crit).<br> <i>Natural odd hit or miss:</i> The dragon takes 1d6 damage.</p><p><i>Resist cold and negative energy 12+:</i> When a cold or negative energy attack targets this creature, the attacker must roll a natural 12+ on the attack roll or it only deals half damage.</p></td><td><p><b>AC</b></p><p><b>PD</b></p><p><b>MD</b></p><p><b>HP</b></p></td><td><p><b>18</b></p><p><b>18</b></p><p><b>14</b></p><p><b>48</b></p></td></tr></tbody></table>`
-const cenoDragonParser = new SrdHtmlParser(cenotapheDragonText);
-console.log("--- Cenotaphe Dragon");
-console.log(cenoDragonParser.getFullMonster());
-
-// End
-console.log("hello");

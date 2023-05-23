@@ -5,7 +5,34 @@
     <title>Title</title>
 </head>
 <body>
+<textarea placeholder="Monster's HTML Statblock" id="rawText"></textarea>
+<button name="parse" onclick="parseMonster()">parse</button>
+
+<textarea id="output">
+
+</textarea>
 
 </body>
+<style>
+    #rawText {
+        width: 800px;
+        height: 200px;
+    }
+
+    #output {
+        width: 800px;
+        height: 600px;
+    }
+</style>
+
 <script src="src/8-srd-html-parser.js"></script>
+<script>
+    function parseMonster() {
+        const text = document.querySelector("#rawText").value;
+        console.log(text);
+
+        const monsterParser = new SrdHtmlParser(text);
+        document.querySelector("#output").value = BlockWriter.writeFullMonster(monsterParser.getFullMonster());
+    }
+</script>
 </html>
