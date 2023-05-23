@@ -1332,8 +1332,8 @@ class Parser13AMonster {
                 defenseValues = [];
 
             for (let i = 0; i < defenseNameWrapper.length; i++) {
-                defenseNames.push(defenseNameWrapper[i].firstElementChild.innerText.toLowerCase());
-                defenseValues.push(defenseValueWrapper[i].firstElementChild.innerText);
+                defenseNames.push(defenseNameWrapper[i].innerText.toLowerCase());
+                defenseValues.push(defenseValueWrapper[i].innerText);
             }
 
             const zip = (a, b) => a.map((k, i) => [k, b[i]]),
