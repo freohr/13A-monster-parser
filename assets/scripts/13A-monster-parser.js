@@ -810,7 +810,7 @@ class Parser13AMonster {
 
     SrdRegexes = class SrdRegexes {
         static get strengthLineRegex() {
-            return /(?<size>\S+)? ?(?<ordinal>(?<level>\d+)\s*(st|nd|rd|th)) level (?<role>\S+) (?<type>\S+)/;
+            return /(?<size>\S+)? ?(?<ordinal>(?<level>\d+)\s*(st|nd|rd|th)?) level (?<role>\S+) (?<type>\S+)/;
         }
 
         static get attackStarterRegex() {
@@ -922,7 +922,7 @@ class Parser13AMonster {
                 monsterDescription.size = descriptionMatch.groups.size.toLowerCase();
             }
             monsterDescription.level = descriptionMatch.groups.level;
-            monsterDescription.levelOrdinal = descriptionMatch.groups.ordinal;
+            monsterDescription.levelOrdinal = descriptionMatch.groups.ordinal + (descriptionMatch.groups.ordinal === "0" ? "th" : "");
             monsterDescription.role = descriptionMatch.groups.role.toLowerCase();
             if (monsterDescription.role === "mook") {
                 monsterDescription.mook = "yes";
