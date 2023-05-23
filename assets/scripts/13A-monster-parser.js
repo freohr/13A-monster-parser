@@ -612,7 +612,7 @@ class Parser13AMonster {
         }
 
         async getSrdStatblockFromHTML() {
-            const monsterName = await this.#quickAddContext.quickAddApi.inputPrompt("Monster Name?");
+            const monsterName = this.#quickAddContext.variables.name ?? await this.#quickAddContext.quickAddApi.inputPrompt("Monster Name?");
             const srdText = await this.#quickAddContext.quickAddApi.wideInputPrompt(
                 "Paste the monster's extracted HTML table from the SRD page WITHOUT line breaks (https://www.13thagesrd.com/monsters)"
             );

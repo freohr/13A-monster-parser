@@ -14,7 +14,6 @@ columns: 1
 ```
 
 ```js quickadd
-const prompter = new customJS.Parser13AMonster.QuickAddPrompter(this)
-console.log(this);
+const prompter = new customJS.Parser13AMonster.QuickAddPrompter(this);
 this.variables["fullBlock"] = await prompter.promptSrdHtmlParser();
 ```
