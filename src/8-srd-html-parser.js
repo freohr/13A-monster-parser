@@ -625,8 +625,16 @@ class SrdHtmlParser {
         const attack = new Attack(attackMatch.groups.attack_name, attackMatch.groups.attack_desc);
 
         // The attack block contains more than just the attack line, we treat every following line as traits for this attack
+
         if (attackBlock.length > 1) {
-            attack.traits.push(...attackBlock.splice(1).map((t) => this.#parseTraitLine(t)));
+            for (const attackTraitText of attackBlock.splice(1)) {
+                try {
+                    attack.traits.push(this.#parseTraitLine(attackTraitText));
+                } catch (e) {
+                    const previousTrait = attack.traits[attack.traits.length - 1];
+                    previousTrait.description = previousTrait.description.concat("<br/>", attackTraitText);
+                }
+            }
         }
 
         return attack;
