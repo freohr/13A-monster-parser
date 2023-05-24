@@ -94,7 +94,7 @@ After that, the prompter should close, and your newly imported monster's note sh
 
 Here's a picture showing which part of the monster's statblock is which block:
 
-![example-blocks-fire-giant.png](example-blocks-fire-giant.png)
+![example-blocks-fire-giant.png](readme/example-blocks-fire-giant.png)
 
 ## ToDo
 
