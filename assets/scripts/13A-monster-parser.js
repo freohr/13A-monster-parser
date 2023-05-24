@@ -612,7 +612,9 @@ class Parser13AMonster {
         }
 
         async getSrdStatblockFromHTML() {
-            const monsterName = this.#quickAddContext.variables.name ?? await this.#quickAddContext.quickAddApi.inputPrompt("Monster Name?");
+            const monsterName =
+                this.#quickAddContext.variables.name ??
+                (await this.#quickAddContext.quickAddApi.inputPrompt("Monster Name?"));
             const srdText = await this.#quickAddContext.quickAddApi.wideInputPrompt(
                 "Paste the monster's extracted HTML table from the SRD page WITHOUT line breaks (https://www.13thagesrd.com/monsters)"
             );
@@ -922,7 +924,8 @@ class Parser13AMonster {
                 monsterDescription.size = descriptionMatch.groups.size.toLowerCase();
             }
             monsterDescription.level = descriptionMatch.groups.level;
-            monsterDescription.levelOrdinal = descriptionMatch.groups.ordinal + (descriptionMatch.groups.ordinal === "0" ? "th" : "");
+            monsterDescription.levelOrdinal =
+                descriptionMatch.groups.ordinal + (descriptionMatch.groups.ordinal === "0" ? "th" : "");
             monsterDescription.role = descriptionMatch.groups.role.toLowerCase();
             if (monsterDescription.role === "mook") {
                 monsterDescription.mook = "yes";
@@ -1220,7 +1223,6 @@ class Parser13AMonster {
             return attack;
         }
 
-
         /**
          *
          * @param monsterName {string}
@@ -1238,14 +1240,15 @@ class Parser13AMonster {
             }
 
             const monsterDescription = {
-                name: monsterName ?? ""
+                name: monsterName ?? "",
             };
 
             if (descriptionMatch.groups.size) {
                 monsterDescription.size = descriptionMatch.groups.size.toLowerCase();
             }
             monsterDescription.level = descriptionMatch.groups.level;
-            monsterDescription.levelOrdinal = descriptionMatch.groups.ordinal;
+            monsterDescription.levelOrdinal =
+                descriptionMatch.groups.ordinal + (descriptionMatch.groups.ordinal === "0" ? "th" : "");
             monsterDescription.role = descriptionMatch.groups.role.toLowerCase();
             if (monsterDescription.role === "mook") {
                 monsterDescription.mook = "yes";
@@ -1283,37 +1286,44 @@ class Parser13AMonster {
                 nastierTraitCategory = { traits: [] };
 
             let currentAttackCategory = attackCategory,
-                currentTraitCategory = traitCategory;
+                currentTraitCategory = traitCategory,
+                lastModifiedItem;
 
             for (const line of attacksAndTraits) {
                 let currentLineMatch;
 
-                // if match attack
-                if ((currentLineMatch = line.match(Parser13AMonster.Namespace.SrdRegexes.attackStarterRegex))) {
-                    // check for trigger header
-                    const isTriggered = currentLineMatch.groups.trigger !== undefined;
-                    const attack = SrdHtmlParser.#parseAttackLine(line);
+                try {
+                    if ((currentLineMatch = line.match(Parser13AMonster.Namespace.SrdRegexes.attackStarterRegex))) {
+                        // check for trigger header
+                        const isTriggered = currentLineMatch.groups.trigger !== undefined;
+                        const attack = SrdHtmlParser.#parseAttackLine(line);
 
-                    if (isTriggered) {
-                        triggeredAttackCategory.attacks.push(attack);
-                    } else {
-                        currentAttackCategory.attacks.push(attack);
+                        if (isTriggered) {
+                            triggeredAttackCategory.attacks.push(attack);
+                        } else {
+                            currentAttackCategory.attacks.push(attack);
+                        }
+                        lastModifiedItem = attack;
+                        continue;
                     }
-                    continue;
-                }
 
-                if ((currentLineMatch = line.match(Parser13AMonster.Namespace.SrdRegexes.traitStarterRegex))) {
-                    // From now on, treat all new attack lines as triggered attacks
-                    currentAttackCategory = triggeredAttackCategory;
+                    if ((currentLineMatch = line.match(Parser13AMonster.Namespace.SrdRegexes.traitStarterRegex))) {
+                        // From now on, treat all new attack lines as triggered attacks
+                        currentAttackCategory = triggeredAttackCategory;
 
-                    // parse the trait
-                    currentTraitCategory.traits.push(SrdHtmlParser.#parseTraitLine(line));
-                    continue;
-                }
+                        const newTrait = SrdHtmlParser.#parseTraitLine(line);
+                        currentTraitCategory.traits.push(newTrait);
+                        lastModifiedItem = newTrait;
+                        continue;
+                    }
 
-                if ((currentLineMatch = line.match(Parser13AMonster.Namespace.SrdRegexes.nastierHeaderRegex))) {
-                    currentTraitCategory = nastierTraitCategory;
-                    continue;
+                    if ((currentLineMatch = line.match(Parser13AMonster.Namespace.SrdRegexes.nastierHeaderRegex))) {
+                        currentTraitCategory = nastierTraitCategory;
+                    }
+                } catch (e) {
+                    console.debug(e);
+                    if (lastModifiedItem)
+                        lastModifiedItem.description = lastModifiedItem.description.concat("<br/>", line);
                 }
             }
 
