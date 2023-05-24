@@ -1184,8 +1184,17 @@ class Parser13AMonster {
 
         /**
          *
+         * @param previousElement {Parser13AMonster.Namespace.Attack|Parser13AMonster.Namespace.Trait}
          * @param traitText {string}
-         * @return {Trait}
+         */
+        static #appendFollowupDescription(previousElement, traitText) {
+            previousElement.description = previousElement.description.concat("<br/>", traitText);
+        }
+
+        /**
+         *
+         * @param traitText {string}
+         * @return {Parser13AMonster.Namespace.Trait}
          */
         static #parseTraitLine(traitText) {
             const traitMatch = traitText.match(Parser13AMonster.Namespace.SrdRegexes.traitStarterRegex);
@@ -1204,10 +1213,10 @@ class Parser13AMonster {
         /**
          *
          * @param attackText {string}
-         * @return {Attack}
+         * @return {Parser13AMonster.Namespace.Attack}
          */
         static #parseAttackLine(attackText) {
-            const attackBlock = attackText.split(" ");
+            const attackBlock = attackText.split(" ").filter((s) => !Parser13AMonster.Namespace.Helpers.isEmpty(s));
             const attackMatch = attackBlock[0].match(Parser13AMonster.Namespace.SrdRegexes.attackStarterRegex);
 
             const attack = new Parser13AMonster.Namespace.Attack(
@@ -1217,7 +1226,19 @@ class Parser13AMonster {
 
             // The attack block contains more than just the attack line, we treat every following line as traits for this attack
             if (attackBlock.length > 1) {
-                attack.traits.push(...attackBlock.splice(1).map((t) => this.#parseTraitLine(t)));
+                for (const traitText of attackBlock.splice(1)) {
+                    try {
+                        const newTrait = this.#parseTraitLine(traitText);
+                        attack.traits.push(newTrait);
+                    } catch (e) {
+                        if (attack.traits.length > 0) {
+                            const previousTrait = attack.traits[attack.traits.length - 1];
+                            SrdHtmlParser.#appendFollowupDescription(previousTrait, traitText);
+                        } else {
+                            SrdHtmlParser.#appendFollowupDescription(attack, traitText);
+                        }
+                    }
+                }
             }
 
             return attack;
@@ -1271,14 +1292,17 @@ class Parser13AMonster {
             return monsterDescription;
         }
 
+        /**
+         *
+         * @return {{traits: Parser13AMonster.Trait[], attacks: Parser13AMonster.Attack[], triggeredAttacks: Parser13AMonster.Attack[], nastierTraits: Parser13AMonster.Trait[]}}
+         */
         getMonsterAttacksAndTraits() {
             // we are skipping the first line, as it holds the Initiative value, and possibly the second one which holds the vulnerability
-            const potentialVulnerabilities = this.#fullStatBlock.children[1].children[1].innerText,
-                attacksAndTraits = SrdHtmlParser.#translateChildrenListToIterable(
-                    this.#fullStatBlock.children[1].children
-                )
-                    .slice(1)
-                    .map((c) => c.innerText);
+            const attacksAndTraits = SrdHtmlParser.#translateChildrenListToIterable(
+                this.#fullStatBlock.children[1].children
+            )
+                .slice(1)
+                .map((c) => c.innerText);
 
             const attackCategory = { attacks: [] },
                 triggeredAttackCategory = { attacks: [] },
@@ -1323,7 +1347,7 @@ class Parser13AMonster {
                 } catch (e) {
                     console.debug(e);
                     if (lastModifiedItem && !line.includes("—") && !line.includes(":")) {
-                        lastModifiedItem.description = lastModifiedItem.description.concat("<br/>", line);
+                        SrdHtmlParser.#appendFollowupDescription(lastModifiedItem, line);
                     } else {
                         throw e;
                     }

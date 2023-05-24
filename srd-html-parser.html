@@ -33,11 +33,12 @@
 <script src="assets/scripts/13A-monster-parser.js"></script>
 <script>
     function parseMonster() {
-        const text = document.querySelector("#rawText").value;
-        console.log(text);
+        const output = document.querySelector("#output");
+        output.value = "";
 
+        const text = document.querySelector("#rawText").value;
         const monsterParser = new Parser13AMonster.Namespace.SrdHtmlParser(text);
-        document.querySelector("#output").value = Parser13AMonster.Namespace.BlockWriter.writeFullMonster(monsterParser.getFullMonster());
+        output.value = Parser13AMonster.Namespace.BlockWriter.writeFullMonster(monsterParser.getFullMonster());
     }
 </script>
 </html>
