@@ -816,7 +816,7 @@ class Parser13AMonster {
         }
 
         static get attackStarterRegex() {
-            return /^(?<trigger>\[Special trigger] )?(?<attack_name>.+) — (?<attack_desc>.*)/;
+            return /^(?<trigger>\[Special Trigger])?(?<attack_name>([CR]:)?[^:]+) — ?(?<attack_desc>.*)/;
         }
 
         static get attackTraitStarterRegex() {
