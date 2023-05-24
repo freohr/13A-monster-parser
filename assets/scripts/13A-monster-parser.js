@@ -838,7 +838,7 @@ class Parser13AMonster {
         }
 
         static get vulnerabilityRegex() {
-            return /^Vulnerability: (?<vulnerability>.+)/;
+            return /^(Vulnerability|Vulnerable): (?<vulnerability>.+)/;
         }
 
         static get initiativeLineIndex() {

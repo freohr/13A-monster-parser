@@ -103,7 +103,7 @@ SrdRegexes = class SrdRegexes {
     }
 
     static get vulnerabilityRegex() {
-        return /^Vulnerability: (?<vulnerability>.+)/;
+        return /^(Vulnerability|Vulnerable): (?<vulnerability>.+)/;
     }
 
     static get initiativeLineIndex() {

@@ -6,7 +6,7 @@
 </head>
 <body>
 <textarea placeholder="Monster's HTML Statblock" id="rawText"></textarea>
-<button name="parse" onclick="parseMonster()">parse</button>
+<button id="parser" name="parse" onclick="parseMonster()">parse</button>
 
 <textarea id="output">
 
@@ -14,6 +14,11 @@
 
 </body>
 <style>
+    #parser {
+        width: 50px;
+        height: 50px;
+    }
+
     #rawText {
         width: 800px;
         height: 200px;
