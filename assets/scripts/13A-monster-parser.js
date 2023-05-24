@@ -820,11 +820,11 @@ class Parser13AMonster {
         }
 
         static get attackTraitStarterRegex() {
-            return /^ (?<trait_name>.+)(?<![RC]): (?<trait_desc>.*)/;
+            return /^ (?<trait_name>.+)(?<![RC]): ?(?<trait_desc>.*)/;
         }
 
         static get traitStarterRegex() {
-            return /^(?! )(?<trait_name>.+)(?<![RC]): (?<trait_desc>.*)/;
+            return /^(?! )(?<trait_name>.+)(?<![RC]): ?(?<trait_desc>.*)/;
         }
 
         static get followUpRegex() {
@@ -836,7 +836,7 @@ class Parser13AMonster {
         }
 
         static get initiativeRegex() {
-            return /^Initiative: \+?(?<initiative>.+)$/;
+            return /^Initiative:? \+?(?<initiative>.+)$/;
         }
 
         static get vulnerabilityRegex() {
@@ -1322,8 +1322,11 @@ class Parser13AMonster {
                     }
                 } catch (e) {
                     console.debug(e);
-                    if (lastModifiedItem)
+                    if (lastModifiedItem && !line.includes("—") && !line.includes(":")) {
                         lastModifiedItem.description = lastModifiedItem.description.concat("<br/>", line);
+                    } else {
+                        throw e;
+                    }
                 }
             }
 
