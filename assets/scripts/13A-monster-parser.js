@@ -611,21 +611,6 @@ class Parser13AMonster {
             return Parser13AMonster.Namespace.BlockWriter.writeFullMonster(statblock);
         }
 
-        async getSrdStatblockFromHTML() {
-            const monsterName =
-                this.#quickAddContext.variables.name ??
-                (await this.#quickAddContext.quickAddApi.inputPrompt("Monster Name?"));
-            const srdText = await this.#quickAddContext.quickAddApi.wideInputPrompt(
-                "Paste the monster's extracted HTML table from the SRD page WITHOUT line breaks (https://www.13thagesrd.com/monsters)"
-            );
-
-            const srdParser = new Parser13AMonster.Namespace.SrdHtmlParser(srdText);
-            const statblock = srdParser.getFullMonster(monsterName);
-            this.#quickAddContext.variables = Object.assign(this.#quickAddContext.variables, statblock.fullDescription);
-
-            return Parser13AMonster.Namespace.BlockWriter.writeFullMonster(statblock);
-        }
-
         async promptMinimalistParser() {
             return [
                 await this.getMonsterDescription(),
@@ -642,7 +627,31 @@ class Parser13AMonster {
         }
 
         async promptSrdHtmlParser() {
-            return [await this.getSrdStatblockFromHTML()].join("\n");
+            const htmlSource = await this.#quickAddContext.quickAddApi.suggester(
+                ["Parse HTML from the extracted SRD webpage?", "Parse HTML from the extracted SRD DocX?"],
+                ["web", "docx"]
+            );
+
+            const monsterName =
+                this.#quickAddContext.variables.name ??
+                (await this.#quickAddContext.quickAddApi.inputPrompt("Monster Name?"));
+            const srdText = await this.#quickAddContext.quickAddApi.wideInputPrompt(
+                "Paste the monster's extracted HTML table from your source."
+            );
+
+            const srdParser = ((source) => {
+                switch (source) {
+                    case "web":
+                        return Parser13AMonster.Namespace.SrdHtmlParser.createPureHtmlParser(srdText);
+                    case "docx":
+                        return Parser13AMonster.Namespace.SrdHtmlParser.createDocxHtmlParser(srdText);
+                }
+            })(htmlSource);
+
+            const statblock = srdParser.getFullMonster(monsterName);
+            this.#quickAddContext.variables = Object.assign(this.#quickAddContext.variables, statblock.fullDescription);
+
+            return Parser13AMonster.Namespace.BlockWriter.writeFullMonster(statblock);
         }
     };
 
@@ -816,11 +825,15 @@ class Parser13AMonster {
         }
 
         static get attackStarterRegex() {
-            return /^(?<trigger>\[Special Trigger])?(?<attack_name>([CR]:)?[^:]+) — ?(?<attack_desc>.*)/;
+            return /^(?<trigger>\[Special Trigger])?(?<attack_name>([CR]:)?[^:]+) ?— ?(?<attack_desc>.*)/i;
         }
 
         static get attackTraitStarterRegex() {
             return /^ (?<trait_name>.+)(?<![RC]): ?(?<trait_desc>.*)/;
+        }
+
+        static get standardAttackTraitNames() {
+            return /^(Limited Use|Natural .*|Miss|.*target.*)/i;
         }
 
         static get traitStarterRegex() {
@@ -861,6 +874,14 @@ class Parser13AMonster {
                 other: /^\((?<name>.+)\)+/,
                 value: /^(?<value>\d+)/,
             };
+        }
+
+        static get italicElement() {
+            return /<em>(?<italic_text>[^:<\[]*)<\/em>/i;
+        }
+
+        static get boldElement() {
+            return /<strong>(?<strong_text>[^:<]*)(?<!ac|pd|md|hp)<\/strong>/i;
         }
     };
 
@@ -1160,11 +1181,37 @@ class Parser13AMonster {
          */
         #fullStatBlock;
 
-        constructor(htmlText) {
-            const localWrapper = document.createElement("div");
-            localWrapper.innerHTML = htmlText;
+        constructor(statBlockTable) {
+            this.#fullStatBlock = statBlockTable;
+        }
 
-            this.#fullStatBlock = localWrapper.children.item(0).children.item(0).children.item(0);
+        static createPureHtmlParser(htmlText) {
+            return this.#getInternalTable(htmlText, 0);
+        }
+
+        static createDocxHtmlParser(htmlText) {
+            return this.#getInternalTable(htmlText, 1);
+        }
+
+        static #getInternalTable(htmlText, internalElementIndex) {
+            const localWrapper = document.createElement("div");
+            localWrapper.innerHTML = SrdHtmlParser.#cleanUpInputText(htmlText);
+
+            const statblockTable = localWrapper.children.item(0).children.item(internalElementIndex).children.item(0);
+
+            return new SrdHtmlParser(statblockTable);
+        }
+
+        static #cleanUpInputText(htmlText) {
+            const italicRegex = new RegExp(Parser13AMonster.Namespace.SrdRegexes.italicElement.source, "g"),
+                boldRegex = new RegExp(Parser13AMonster.Namespace.SrdRegexes.boldElement.source, "g");
+
+            return htmlText
+                .split("\n")
+                .join(" ")
+                .replaceAll(/>\s+</gi, "><")
+                .replaceAll(italicRegex, "_$<italic_text>_")
+                // .replaceAll(boldRegex, "__$<strong_text>__");
         }
 
         /**
@@ -1332,12 +1379,21 @@ class Parser13AMonster {
                     }
 
                     if ((currentLineMatch = line.match(Parser13AMonster.Namespace.SrdRegexes.traitStarterRegex))) {
-                        // From now on, treat all new attack lines as triggered attacks
-                        currentAttackCategory = triggeredAttackCategory;
-
                         const newTrait = SrdHtmlParser.#parseTraitLine(line);
-                        currentTraitCategory.traits.push(newTrait);
-                        lastModifiedItem = newTrait;
+                        if (
+                            newTrait.name.match(Parser13AMonster.Namespace.SrdRegexes.standardAttackTraitNames) &&
+                            lastModifiedItem &&
+                            lastModifiedItem instanceof Parser13AMonster.Namespace.Attack
+                        ) {
+                            lastModifiedItem.traits.push(newTrait);
+                        } else {
+                            // From now on, treat all new attack lines as triggered attacks
+                            currentAttackCategory = triggeredAttackCategory;
+
+                            currentTraitCategory.traits.push(newTrait);
+                            lastModifiedItem = newTrait;
+                        }
+
                         continue;
                     }
 
