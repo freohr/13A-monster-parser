@@ -833,7 +833,7 @@ class Parser13AMonster {
         }
 
         static get standardAttackTraitNames() {
-            return /^(Limited Use|Natural .*|Miss|.*target.*)/i;
+            return /^(Limited Use|Natural (\d+|odd|even)|.*Hit|Miss|.*target.*|.*failed save.*)/i;
         }
 
         static get traitStarterRegex() {
@@ -1210,8 +1210,8 @@ class Parser13AMonster {
                 .split("\n")
                 .join(" ")
                 .replaceAll(/>\s+</gi, "><")
-                .replaceAll(italicRegex, "_$<italic_text>_")
-                // .replaceAll(boldRegex, "__$<strong_text>__");
+                .replaceAll(italicRegex, "_$<italic_text>_");
+            // .replaceAll(boldRegex, "__$<strong_text>__");
         }
 
         /**
