@@ -1232,10 +1232,35 @@ class Parser13AMonster {
         /**
          *
          * @param previousElement {Parser13AMonster.Namespace.Attack|Parser13AMonster.Namespace.Trait}
-         * @param traitText {string}
+         * @param followupText {string}
+         * @returns {boolean} true if the operation succeeded
          */
-        static #appendFollowupDescription(previousElement, traitText) {
-            previousElement.description = previousElement.description.concat("<br/>", traitText);
+        static #appendFollowupDescription(previousElement, followupText) {
+            /**
+             *
+             * @param element {Parser13AMonster.Namespace.Attack|Parser13AMonster.Namespace.Trait}
+             * @param text {string}
+             */
+            const appendDescription = (element, text) => {
+                element.description = element.description.concat("<br/>", text);
+            };
+
+            if (previousElement instanceof Parser13AMonster.Namespace.Attack) {
+                let modifiedElement;
+                if (previousElement.traits.length > 0) {
+                    modifiedElement = previousElement.traits[previousElement.traits.length - 1];
+                } else {
+                    modifiedElement = previousElement;
+                }
+
+                appendDescription(modifiedElement, followupText);
+                return true;
+            } else if (previousElement instanceof Parser13AMonster.Namespace.Trait) {
+                SrdHtmlParser.#appendFollowupDescription(previousElement, followupText);
+                return true;
+            }
+
+            return false;
         }
 
         /**
@@ -1399,14 +1424,26 @@ class Parser13AMonster {
 
                     if ((currentLineMatch = line.match(Parser13AMonster.Namespace.SrdRegexes.nastierHeaderRegex))) {
                         currentTraitCategory = nastierTraitCategory;
+                        continue;
                     }
+
+                    if (lastModifiedItem && SrdHtmlParser.#appendFollowupDescription(lastModifiedItem, line)) {
+                        continue;
+                    }
+
+                    throw new Error(`Unable to determine type of current line: ${line}`, {
+                        cause: {
+                            code: "unknownLine",
+                        },
+                    });
                 } catch (e) {
                     console.debug(e);
-                    if (lastModifiedItem && !line.includes("—") && !line.includes(":")) {
-                        SrdHtmlParser.#appendFollowupDescription(lastModifiedItem, line);
-                    } else {
-                        throw e;
+                    if (e.cause !== "unknownLine") {
+                        if (lastModifiedItem && SrdHtmlParser.#appendFollowupDescription(lastModifiedItem, line)) {
+                            continue;
+                        }
                     }
+                    throw e;
                 }
             }
 
