@@ -845,7 +845,7 @@ class Parser13AMonster {
         }
 
         static get nastierHeaderRegex() {
-            return /^Nastier Specials$/;
+            return /^Nastier Specials?$/i;
         }
 
         static get initiativeRegex() {
