@@ -1355,25 +1355,28 @@ class Parser13AMonster {
             );
             monsterDescription.initiative = initiativeMatch.groups.initiative;
 
-            if (initiativeAndVulnerability.length > 1) {
-                let vulnerabilityMatch = initiativeAndVulnerability[1].match(
-                    Parser13AMonster.Namespace.SrdRegexes.vulnerabilityRegex
-                );
+            const potentialVulnerabilityLine = (initiativeAndVulnerability.length > 1) ? initiativeAndVulnerability[1] : this.#fullStatBlock.children[1].children[1].innerText;
+            let vulnerabilityMatch;
+            if ((vulnerabilityMatch = potentialVulnerabilityLine.match(Parser13AMonster.Namespace.SrdRegexes.vulnerabilityRegex))) {
                 monsterDescription.vulnerability = vulnerabilityMatch.groups.vulnerability;
             }
             return monsterDescription;
         }
 
+        get #hasSeparateVulnerability() {
+            return this.#fullStatBlock.children[1].children[1].innerText.match(Parser13AMonster.Namespace.SrdRegexes.vulnerabilityRegex) !== null;
+        }
+
         /**
-         *
+         * @param hasVulnerability {boolean}
          * @return {{traits: Parser13AMonster.Trait[], attacks: Parser13AMonster.Attack[], triggeredAttacks: Parser13AMonster.Attack[], nastierTraits: Parser13AMonster.Trait[]}}
          */
-        getMonsterAttacksAndTraits() {
+        getMonsterAttacksAndTraits(hasVulnerability) {
             // we are skipping the first line, as it holds the Initiative value, and possibly the second one which holds the vulnerability
             const attacksAndTraits = SrdHtmlParser.#translateChildrenListToIterable(
                 this.#fullStatBlock.children[1].children
             )
-                .slice(1)
+                .slice(this.#hasSeparateVulnerability ? 2 : 1)
                 .map((c) => c.innerText);
 
             const attackCategory = { attacks: [] },
