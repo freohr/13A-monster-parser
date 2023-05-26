@@ -833,7 +833,7 @@ class Parser13AMonster {
         }
 
         static get standardAttackTraitNames() {
-            return /^(Limited Use|Natural (\d+|odd|even)|.*Hit|Miss|.*target.*|.*failed save.*)/i;
+            return /^(Limited Use|Natural (\d+|odd|even)|.*Hit|Miss|.*target.*|.*failed save.*|.*per battle.*|Criti?c?a?l?)/i;
         }
 
         static get traitStarterRegex() {
@@ -1389,9 +1389,8 @@ class Parser13AMonster {
                 lastModifiedItem;
 
             for (const line of attacksAndTraits) {
-                let currentLineMatch;
-
                 try {
+                    let currentLineMatch;
                     if ((currentLineMatch = line.match(Parser13AMonster.Namespace.SrdRegexes.attackStarterRegex))) {
                         // check for trigger header
                         const isTriggered = currentLineMatch.groups.trigger !== undefined;
