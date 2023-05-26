@@ -21,9 +21,16 @@ class Parser13AMonster {
         #name = "";
         #description = "";
 
-        constructor(name, description) {
+        /**
+         *
+         * @type {Parser13AMonster.Trait[]}
+         */
+        #traits = [];
+
+        constructor(name, description, traits) {
             this.#name = name;
             this.#description = description;
+            this.#traits = traits ?? [];
         }
 
         get name() {
@@ -36,6 +43,10 @@ class Parser13AMonster {
 
         set description(text) {
             this.#description = text;
+        }
+
+        get traits() {
+            return this.#traits;
         }
     };
 
@@ -63,12 +74,12 @@ class Parser13AMonster {
             return this.#description;
         }
 
-        get traits() {
-            return this.#traits;
-        }
-
         set description(text) {
             this.#description = text;
+        }
+
+        get traits() {
+            return this.#traits;
         }
     };
 
@@ -355,7 +366,13 @@ class Parser13AMonster {
         }
 
         static #createSingleTraitBlock(trait) {
-            return [BlockWriter.#noIndentNameLine(trait.name), BlockWriter.#noIndentDescLine(trait.description)].join(
+            const traitStrings = [BlockWriter.#noIndentNameLine(trait.name), BlockWriter.#noIndentDescLine(trait.description)]
+
+            if (trait.traits.length > 0) {
+                traitStrings.push(...BlockWriter.#createNestedTraitsBlock(trait.traits));
+            }
+
+            return traitStrings.join(
                 "\n"
             );
         }
@@ -366,17 +383,25 @@ class Parser13AMonster {
                 BlockWriter.#noIndentDescLine(attack.description),
             ];
 
-            if (attack.traits && attack.traits.length > 0) {
-                attackStrings.push(BlockWriter.attackTraitsHeaderLine);
-                attack.traits.forEach((trait) =>
-                    attackStrings.push(
-                        BlockWriter.#attackTraitNameLine(trait.name),
-                        BlockWriter.#attackTraitDescLine(trait.description)
-                    )
-                );
+            if (attack.traits.length > 0) {
+                attackStrings.push(...BlockWriter.#createNestedTraitsBlock(attack.traits));
             }
 
             return attackStrings.join("\n");
+        }
+
+        static #createNestedTraitsBlock(nestedTraits) {
+            const nestedTraitStrings = [];
+
+            nestedTraitStrings.push(BlockWriter.attackTraitsHeaderLine);
+            nestedTraits.forEach((trait) =>
+                nestedTraitStrings.push(
+                    BlockWriter.#attackTraitNameLine(trait.name),
+                    BlockWriter.#attackTraitDescLine(trait.description)
+                )
+            );
+
+            return nestedTraitStrings;
         }
 
         static writeStandardAttacksBlock(attacks) {
@@ -1355,16 +1380,27 @@ class Parser13AMonster {
             );
             monsterDescription.initiative = initiativeMatch.groups.initiative;
 
-            const potentialVulnerabilityLine = (initiativeAndVulnerability.length > 1) ? initiativeAndVulnerability[1] : this.#fullStatBlock.children[1].children[1].innerText;
+            const potentialVulnerabilityLine =
+                initiativeAndVulnerability.length > 1
+                    ? initiativeAndVulnerability[1]
+                    : this.#fullStatBlock.children[1].children[1].innerText;
             let vulnerabilityMatch;
-            if ((vulnerabilityMatch = potentialVulnerabilityLine.match(Parser13AMonster.Namespace.SrdRegexes.vulnerabilityRegex))) {
+            if (
+                (vulnerabilityMatch = potentialVulnerabilityLine.match(
+                    Parser13AMonster.Namespace.SrdRegexes.vulnerabilityRegex
+                ))
+            ) {
                 monsterDescription.vulnerability = vulnerabilityMatch.groups.vulnerability;
             }
             return monsterDescription;
         }
 
         get #hasSeparateVulnerability() {
-            return this.#fullStatBlock.children[1].children[1].innerText.match(Parser13AMonster.Namespace.SrdRegexes.vulnerabilityRegex) !== null;
+            return (
+                this.#fullStatBlock.children[1].children[1].innerText.match(
+                    Parser13AMonster.Namespace.SrdRegexes.vulnerabilityRegex
+                ) !== null
+            );
         }
 
         /**
@@ -1409,8 +1445,7 @@ class Parser13AMonster {
                         const newTrait = SrdHtmlParser.#parseTraitLine(line);
                         if (
                             newTrait.name.match(Parser13AMonster.Namespace.SrdRegexes.standardAttackTraitNames) &&
-                            lastModifiedItem &&
-                            lastModifiedItem instanceof Parser13AMonster.Namespace.Attack
+                            lastModifiedItem
                         ) {
                             lastModifiedItem.traits.push(newTrait);
                         } else {
