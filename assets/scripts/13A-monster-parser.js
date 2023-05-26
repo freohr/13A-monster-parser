@@ -1252,11 +1252,11 @@ class Parser13AMonster {
                 } else {
                     modifiedElement = previousElement;
                 }
-
                 appendDescription(modifiedElement, followupText);
+
                 return true;
             } else if (previousElement instanceof Parser13AMonster.Namespace.Trait) {
-                SrdHtmlParser.#appendFollowupDescription(previousElement, followupText);
+                appendDescription(previousElement, followupText);
                 return true;
             }
 
