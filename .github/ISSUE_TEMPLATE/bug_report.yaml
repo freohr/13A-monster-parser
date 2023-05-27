@@ -1,0 +1,108 @@
+name: Bug Report
+description: File a bug report for issues with 1st Party Content
+labels: bug
+title: "[Bug]: "
+assignees:
+  - Freohr
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Before you begin
+        Make sure to use the latest version of the Parser
+        If you face any issues after installing, updating, or reloading the parser, try restarting Obsidian.
+
+  - type: checkboxes
+    id: duplicate-issues
+    attributes:
+      label: "Check for existing bug reports before submitting."
+      description: "Use Label filters to refine your search. Check both open and closed issues to see if your issue has already been reported."
+      options:
+        - label: "I searched for existing Bug Reports and found no similar reports."
+          required: true
+
+  - type: textarea
+    id: monsters
+    attributes:
+      label: "Which Monsters?"
+      description: "If this is in reference to a parsing error, which monster(s) were effected?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: "What *should have** happened?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Current behaviour
+      description: |
+        "How did the issue manifest itself in reality? Including screenshots would be helpful."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: |
+        Please provide us with the exact steps to reproduce the issue. 
+        The more detail you provide, the easier it will be for us to narrow down and fix the bug. 
+        Please ensure that you paste in codeblocks and/or queries as text, rather than screenshots.
+        Format your pasted text as described in Give us Text to copy. 
+        We will not accept bug reports that require anyone to re-type text from screenshots or descriptive text.
+        Please note that if you're a Mac user, a Safari bug might strip newlines from your text.
+      placeholder: |
+        Example of the level of detail needed to reproduce any bugs efficiently and reliably. 
+        Without it, your issue may get worked on last.
+        1. Installed Scripts
+        2. Ran Quick-Add Command
+        3. Selected Monster from PDF
+        4. etc
+        (Mac users: a Safari bug strips newlines from this text.)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: operating-systems
+    attributes:
+      label: Which Operating Systems are you using?
+      description: You may select more than one.
+      options:
+        - label: Android
+        - label: iPhone/iPad
+        - label: Linux
+        - label: macOS
+        - label: Windows
+
+  - type: input
+    id: obsidian-version
+    attributes:
+      label: Obsidian Version Check
+      description: Which Obsidian Version and Installer Version are you using?
+      placeholder: 1.28.7 and 1.2.7
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Parser Version
+      description: Which plugin version are you using?
+      placeholder: x.x.x
+    validations:
+      required: true
+
+  - type: textarea
+    id: possible-suggestions
+    attributes:
+      label: Possible Suggestions
+      description: |
+        (Optional) Sometimes we cannot make the statblock look the same in Obsidian 
+        as it does in the book for practical reasons. 
+        Do you have a suggestion on what could go where?
