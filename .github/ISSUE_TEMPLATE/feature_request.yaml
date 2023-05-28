@@ -37,7 +37,7 @@ body:
     attributes:
       label: Provide a Link
       description: Please provide a link to where this resource can be purchased
-      placeholder: x.x.x
+      placeholder: "https://www.drivethrurpg.com/product/126429/Midgard-Bestiary-13th-Age-Compatible"
     validations:
       required: true
   - type: textarea
