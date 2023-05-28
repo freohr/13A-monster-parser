@@ -1,68 +1,71 @@
+
 name: Feature Request
- description: File a Feature Request for issues with 1st Party Content
- labels: enhancement
- title: "[Feature]: "
- assignees:
-   - Freohr
- body:
-   - type: markdown
-     attributes:
-       value: |
-         ## Before you begin
-         Make sure to use the latest version of the Parser
-         If you face any issues after installing, updating, or reloading the parser, try restarting Obsidian.
-        
-   - type: checkboxes
-     id: duplicate-issues
-     attributes:
-       label: "Check for existing feature/enhancement reports before submitting."
-       description: "Use Label filters to refine your search. Check both open and closed issues to see if your issue has already been reported."
-       options:
-         - label: "I searched for existing feature/Enhancement Requests and found no similar reports."
-           required: true
+description: File a Feature Request for issues with 1st Party Content
+labels: enhancement
+title: "[Feature]: "
+assignees:
+  - Freohr
+body:
+  - type: markdown
+    attributes:
+      value: >
+        ## Before you begin
 
-   - type: textarea
-     id: Book
-     attributes:
-       label: "Source Material"
-       description: "What is the Source of this Monster? For Example, Kobold Press' Midgard Bestiary."
-     validations:
-       required: true
-       
-   - type: input
-     id: book-link
-     attributes:
-       label: Provide a Link
-       description: Please provide a link to where this resource can be purchased
-       placeholder: x.x.x
-     validations:
-       required: true
+        Make sure to use the latest version of the Parser
 
-   - type: textarea
-     id: monsters
-     attributes:
-       label: "Which Monsters?"
-       description: "Are you having an issue with all monsters, or only some? If some, which ones?"
-     validations:
-       required: true
+        If you face any issues after installing, updating, or reloading the parser, try restarting Obsidian.
+  - type: checkboxes
+    id: duplicate-issues
+    attributes:
+      label: Check for existing feature/enhancement reports before submitting.
+      description: Use Label filters to refine your search. Check both open and closed
+        issues to see if your issue has already been reported.
+      options:
+        - label: I searched for existing feature/Enhancement Requests and found no similar
+            reports.
+          required: true
+  - type: textarea
+    id: Book
+    attributes:
+      label: Source Material
+      description: What is the Source of this Monster? For Example, Kobold Press'
+        Midgard Bestiary.
+    validations:
+      required: true
+  - type: input
+    id: book-link
+    attributes:
+      label: Provide a Link
+      description: Please provide a link to where this resource can be purchased
+      placeholder: x.x.x
+    validations:
+      required: true
+  - type: textarea
+    id: monsters
+    attributes:
+      label: Which Monsters?
+      description: Are you having an issue with all monsters, or only some? If some,
+        which ones?
+    validations:
+      required: true
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Parser Version
+      description: Which plugin version are you using?
+      placeholder: x.x.x
+    validations:
+      required: true
+  - type: textarea
+    id: possible-suggestions
+    attributes:
+      label: Possible Suggestions
+      description: >
+        (Optional) Sometimes we cannot make the statblock look the same in
+        Obsidian 
 
-   - type: input
-     id: plugin-version
-     attributes:
-       label: Parser Version
-       description: Which plugin version are you using?
-       placeholder: x.x.x
-     validations:
-       required: true
+        as it does in the book for practical reasons. 
 
-   - type: textarea
-     id: possible-suggestions
-     attributes:
-       label: Possible Suggestions
-       description: |
-         (Optional) Sometimes we cannot make the statblock look the same in Obsidian 
-         as it does in the book for practical reasons. 
-         Do you have a suggestion on what could go where?
-     validations:
-       required: true
-       
+        Do you have a suggestion on what could go where?
+    validations:
+      required: true
