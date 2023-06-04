@@ -862,7 +862,7 @@ class Parser13AMonster {
         }
 
         static get traitStarterRegex() {
-            return /^(?! )(?<trait_name>.+)(?<![RC]): ?(?<trait_desc>.*)/;
+            return /^(?! )(?<trait_name>.+?)(?<![RC]): ?(?<trait_desc>.*)/;
         }
 
         static get followUpRegex() {
