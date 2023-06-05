@@ -680,6 +680,44 @@ class Parser13AMonster {
         }
     };
 
+    TemplaterPrompter = class TemplaterPrompter {
+
+        #templater = {}
+
+        constructor(tp) {
+            this.#templater = tp;
+        }
+
+        async promptSrdHtmlParser() {
+            const monsterName = await this.#templater.system.prompt("Monster Name?");
+
+            const htmlSource = await this.#templater.system.suggester(
+                ["Parse HTML from the extracted SRD webpage?", "Parse HTML from the extracted SRD DocX?"],
+                ["web", "docx"]
+            );
+
+            const srdText = await this.#templater.system.prompt(
+                "Paste the monster's extracted HTML table from your source.",
+                "",
+                false,
+                true
+            );
+
+            const srdParser = ((source) => {
+                switch (source) {
+                    case "web":
+                        return Parser13AMonster.Namespace.SrdHtmlParser.createPureHtmlParser(srdText);
+                    case "docx":
+                        return Parser13AMonster.Namespace.SrdHtmlParser.createDocxHtmlParser(srdText);
+                }
+            })(htmlSource);
+
+            const statblock = srdParser.getFullMonster(monsterName);
+
+            return Parser13AMonster.Namespace.BlockWriter.writeFullMonster(statblock);
+        }
+    };
+
     FullStatBlock = class FullStatBlock {
         #name = "";
         #flavor_text = "";
