@@ -888,7 +888,7 @@ class Parser13AMonster {
         }
 
         static get attackStarterRegex() {
-            return /^(?<trigger>\[Special Trigger])?(?<attack_name>([CR]:)?[^:]+) ?— ?(?<attack_desc>.*)/i;
+            return /^(?<trigger>\[Special Trigger])?(?<attack_name>((\[.*] ?)?[CR]:)?[^:]+) ?— ?(?<attack_desc>.*)/i;
         }
 
         static get attackTraitStarterRegex() {
@@ -896,7 +896,7 @@ class Parser13AMonster {
         }
 
         static get standardAttackTraitNames() {
-            return /^(Limited Use|Natural (\d+|odd|even)|.*Hit|Miss|.*target.*|.*failed save.*|.*per battle.*|Criti?c?a?l?)/i;
+            return /^(Limited Use|.*Natural (\d+|odd|even)|.*Hit|.*Miss|.*target.*|.*failed save.*|.*per battle.*|Criti?c?a?l?|Quick Use)/i;
         }
 
         static get traitStarterRegex() {
