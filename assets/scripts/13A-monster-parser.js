@@ -475,17 +475,7 @@ class Parser13AMonster {
             const stringBlocks = [];
 
             stringBlocks.push(
-                this.writeDescriptionBlock({
-                    name: fullStatblock.name,
-                    flavor_text: fullStatblock.flavor_text,
-                    size: fullStatblock.size,
-                    level: fullStatblock.level,
-                    levelOrdinal: fullStatblock.levelOrdinal,
-                    role: fullStatblock.role,
-                    type: fullStatblock.type,
-                    initiative: fullStatblock.initiative,
-                    vulnerability: fullStatblock.vulnerability,
-                }),
+                this.writeDescriptionBlock(fullStatblock.fullDescription),
                 this.writeStandardAttacksBlock(fullStatblock.attacks),
                 this.writeStandardTraitsBlock(fullStatblock.traits),
                 this.writeNastierTraitsBlock(fullStatblock.nastierTraits),
@@ -765,7 +755,7 @@ class Parser13AMonster {
         }
 
         get fullDescription() {
-            return {
+            const desc = {
                 name: this.name,
                 size: this.size,
                 level: this.level,
@@ -775,6 +765,12 @@ class Parser13AMonster {
                 initiative: this.initiative,
                 vulnerability: this.vulnerability,
             };
+
+            if (this.role === "mook") {
+                desc.mook = "yes";
+            }
+
+            return desc;
         }
 
         get name() {
@@ -1406,9 +1402,6 @@ class Parser13AMonster {
             monsterDescription.levelOrdinal =
                 descriptionMatch.groups.ordinal + (descriptionMatch.groups.ordinal === "0" ? "th" : "");
             monsterDescription.role = descriptionMatch.groups.role.toLowerCase();
-            if (monsterDescription.role === "mook") {
-                monsterDescription.mook = "yes";
-            }
             monsterDescription.type = descriptionMatch.groups.type.toLowerCase();
 
             const initiativeAndVulnerability = this.#fullStatBlock.children[1].children[0].innerHTML.split("<br>");
