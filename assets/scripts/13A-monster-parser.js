@@ -766,6 +766,10 @@ class Parser13AMonster {
                 vulnerability: this.vulnerability,
             };
 
+            if (!Parser13AMonster.Namespace.Helpers.isEmpty(this.flavor_text)) {
+                desc.flavor_text = this.flavor_text;
+            }
+
             if (this.role === "mook") {
                 desc.mook = "yes";
             }
