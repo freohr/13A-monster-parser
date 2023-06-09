@@ -16,6 +16,26 @@ class Parser13AMonster {
             if (typeof stuff === "string" && stuff.length === 0) return true;
             return Object.entries(stuff).length === 0;
         }
+
+        static getOrdinal(number) {
+            const localNumber = parseInt(number);
+
+            if (number === 0 || (number >= 4 && number <= 30)) {
+                return `${number}th`;
+            }
+
+            if (number % 10 === 1) {
+                return `${number}st`;
+            }
+
+            if (number % 10 === 2) {
+                return `${number}nd`;
+            }
+
+            if (number % 10 === 3) {
+                return `${number}rd`;
+            }
+        }
     };
     Trait = class Trait {
         #name = "";
@@ -132,36 +152,8 @@ class Parser13AMonster {
             this.#textHandler = new Parser13AMonster.Namespace.TextHandler(textBlock);
         }
 
-        static get #attackStarterRegex() {
-            return /^(?<attack_name>.+)—(?<attack_desc>.*)/;
-        }
-
-        static get #traitStarterRegex() {
-            return /^(?<trait_name>.+)(?<![RC]): (?<trait_desc>.*)/;
-        }
-
-        static get #triggeredAttackStarterRegex() {
-            return /^\[Special trigger] (?<attack_name>.+)—(?<attack_desc>.*)$/;
-        }
-
         static get #followupRegex() {
-            return /^([^:—]+|[^A-Z].+)$/;
-        }
-
-        static get #strengthLineRegex() {
-            return /(?<strength>\S+)? ?(?<ordinal>(?<level>\d+)\s*(st|nd|rd|th)) level (?<role>\S+) \[(?<type>\S+)]/;
-        }
-
-        static get #initiativeRegex() {
-            return /^Initiative: \+?(?<initiative>.+)$/;
-        }
-
-        static get #vulnerabilityRegex() {
-            return /^Vulnerability: (?<vulnerability>.+)/;
-        }
-
-        static get #defenseRegex() {
-            return /^(?<name>AC|PD|MD|HP) (?<value>\d+)$/i;
+            return /^([^:—]+|[^a-z].+)$/i;
         }
 
         #getDescription(descStarter) {
@@ -185,7 +177,7 @@ class Parser13AMonster {
 
             while (
                 !this.#textHandler.atEnd &&
-                (traitMatch = this.#textHandler.currentLine.match(BlockParser.#traitStarterRegex)) !== null
+                (traitMatch = this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.traitStarterRegex)) !== null
             ) {
                 this.#textHandler.advanceIndex();
 
@@ -213,20 +205,16 @@ class Parser13AMonster {
                 triggeredAttacks = [];
 
             while (!this.#textHandler.atEnd) {
-                let startAttackMatch, startTriggerMatch;
+                let startAttackMatch;
 
-                if (
-                    (startTriggerMatch = this.#textHandler.currentLine.match(BlockParser.#triggeredAttackStarterRegex))
-                ) {
-                    this.#textHandler.advanceIndex();
-                    triggeredAttacks.push(
-                        this.#getFullAttack(startTriggerMatch.groups.attack_name, startTriggerMatch.groups.attack_desc)
-                    );
-                } else if ((startAttackMatch = this.#textHandler.currentLine.match(BlockParser.#attackStarterRegex))) {
-                    this.#textHandler.advanceIndex();
-                    attacks.push(
-                        this.#getFullAttack(startAttackMatch.groups.attack_name, startAttackMatch.groups.attack_desc)
-                    );
+                if ((startAttackMatch = this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.attackStarterRegex))) {
+                    const newAttack = this.#getFullAttack(startAttackMatch.groups.attack_name, startAttackMatch.groups.attack_desc);
+
+                    if (startAttackMatch.groups.trigger) {
+                        triggeredAttacks.push(newAttack);
+                    } else {
+                        attacks.push(newAttack);
+                    }
                 }
             }
 
@@ -266,7 +254,7 @@ class Parser13AMonster {
             const flavorText = [];
             while (
                 !this.#textHandler.atEnd &&
-                this.#textHandler.currentLine.match(BlockParser.#strengthLineRegex) === null
+                this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.strengthLineRegex) === null
             ) {
                 flavorText.push(this.#textHandler.currentLine);
                 this.#textHandler.advanceIndex();
@@ -275,10 +263,10 @@ class Parser13AMonster {
 
             // We should be at the monster strength line now
             let strengthMatch;
-            if ((strengthMatch = this.#textHandler.currentLine.match(BlockParser.#strengthLineRegex))) {
-                monsterDescription.size = strengthMatch.groups.strength.toLowerCase();
-                monsterDescription.level = strengthMatch.groups.level;
-                monsterDescription.levelOrdinal = strengthMatch.groups.ordinal.replace(/ /g, "");
+            if ((strengthMatch = this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.strengthLineRegex))) {
+                monsterDescription.size = strengthMatch.groups.strength?.toLowerCase();
+                monsterDescription.level = strengthMatch.groups.level ?? strengthMatch.groups.levelAfter;
+                monsterDescription.levelOrdinal = strengthMatch.groups.ordinal ?? Parser13AMonster.Namespace.Helpers.getOrdinal(monsterDescription.level);
                 monsterDescription.type = strengthMatch.groups.type.toLowerCase();
 
                 monsterDescription.role = strengthMatch.groups.role.toLowerCase();
@@ -294,9 +282,9 @@ class Parser13AMonster {
             while (!this.#textHandler.atEnd) {
                 // After that, there should only be Init and Vulnerabilities left, we don't need to do it in order
                 let lineMatch;
-                if ((lineMatch = this.#textHandler.currentLine.match(BlockParser.#initiativeRegex))) {
+                if ((lineMatch = this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.initiativeRegex))) {
                     monsterDescription.initiative = lineMatch.groups.initiative;
-                } else if ((lineMatch = this.#textHandler.currentLine.match(BlockParser.#vulnerabilityRegex))) {
+                } else if ((lineMatch = this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.vulnerabilityRegex))) {
                     monsterDescription.vulnerability = Parser13AMonster.Namespace.Helpers.stringToPascalCase(
                         lineMatch.groups.vulnerability
                     );
@@ -318,7 +306,7 @@ class Parser13AMonster {
             let defenseMatch;
 
             while (!this.#textHandler.atEnd) {
-                if ((defenseMatch = this.#textHandler.currentLine.match(BlockParser.#defenseRegex))) {
+                if ((defenseMatch = this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.defensesRegex.anyDefenseOneLine))) {
                     defenses[defenseMatch.groups.name.toLowerCase()] = parseInt(defenseMatch.groups.value);
                 }
                 this.#textHandler.advanceIndex();
@@ -629,7 +617,7 @@ class Parser13AMonster {
         async promptMinimalistParser() {
             return [
                 await this.getMonsterDescription(),
-                (await this.getMonsterActions()).actions,
+                await this.getMonsterActions(),
                 await this.getMonsterTraits(),
                 await this.getMonsterNastierTraits(),
                 await this.getMonsterTriggeredActions(),
@@ -882,9 +870,9 @@ class Parser13AMonster {
         }
     };
 
-    SrdRegexes = class SrdRegexes {
+    ParsingRegexes = class ParsingRegexes {
         static get strengthLineRegex() {
-            return /(?<size>\S+)? ?(?<ordinal>(?<level>\d+)\s*(st|nd|rd|th)?) level (?<role>\S+) (?<type>\S+)/;
+            return /(?<strength>\S+)? ?(((?<ordinal>(?<level>\d+)\s*(st|nd|rd|th)) )level|level (?<levelAfter>\d+)) (?<role>\S+) \[(?<type>\S+)]/i;
         }
 
         static get attackStarterRegex() {
@@ -934,6 +922,7 @@ class Parser13AMonster {
                 md: /^MD/i,
                 hp: /^HP/i,
                 anyDefense: /^(AC|PD|MD|HP)/i,
+                anyDefenseOneLine: /^(?<name>AC|PD|MD|HP) (?<value>\d+)$/i,
                 other: /^\((?<name>.+)\)+/,
                 value: /^(?<value>\d+)/,
             };
@@ -956,9 +945,9 @@ class Parser13AMonster {
         }
 
         #placeTextAtStartOfBlock(startOfBlockRegex) {
-            this.#textHandler.index = Parser13AMonster.Namespace.SrdRegexes.initiativeLineIndex;
+            this.#textHandler.index = Parser13AMonster.Namespace.ParsingRegexes.initiativeLineIndex;
             this.#textHandler.advanceIndex();
-            if (this.#textHandler.currentLine.match(Parser13AMonster.Namespace.SrdRegexes.vulnerabilityRegex)) {
+            if (this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.vulnerabilityRegex)) {
                 this.#textHandler.advanceIndex(2);
             } else {
                 this.#textHandler.advanceIndex();
@@ -988,7 +977,7 @@ class Parser13AMonster {
 
             const descriptionArray = [];
 
-            while (!this.#textHandler.currentLine.match(Parser13AMonster.Namespace.SrdRegexes.blockSeparator)) {
+            while (!this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator)) {
                 descriptionArray.push(this.#textHandler.currentLine);
                 this.#textHandler.advanceIndex();
             }
@@ -998,7 +987,7 @@ class Parser13AMonster {
                 .map((s) => s.trim())
                 .join(" ");
 
-            const descriptionMatch = descriptionString.match(Parser13AMonster.Namespace.SrdRegexes.strengthLineRegex);
+            const descriptionMatch = descriptionString.match(Parser13AMonster.Namespace.ParsingRegexes.strengthLineRegex);
 
             if (!descriptionMatch) {
                 throw "Bad format for monster description";
@@ -1019,13 +1008,13 @@ class Parser13AMonster {
             this.#textHandler.advanceIndex(2);
 
             const initiativeMatch = this.#textHandler.currentLine.match(
-                Parser13AMonster.Namespace.SrdRegexes.initiativeRegex
+                Parser13AMonster.Namespace.ParsingRegexes.initiativeRegex
             );
             monsterDescription.initiative = initiativeMatch.groups.initiative;
             this.#textHandler.advanceIndex();
 
             let vulnerabilityMatch = this.#textHandler.currentLine.match(
-                Parser13AMonster.Namespace.SrdRegexes.vulnerabilityRegex
+                Parser13AMonster.Namespace.ParsingRegexes.vulnerabilityRegex
             );
             if (vulnerabilityMatch) {
                 monsterDescription.vulnerability = vulnerabilityMatch.groups.vulnerability;
@@ -1036,7 +1025,7 @@ class Parser13AMonster {
 
         getMonsterAttacks() {
             // Set up the text handler to the correct line
-            this.#placeTextAtStartOfBlock(Parser13AMonster.Namespace.SrdRegexes.attackStarterRegex);
+            this.#placeTextAtStartOfBlock(Parser13AMonster.Namespace.ParsingRegexes.attackStarterRegex);
 
             if (this.#textHandler.atEnd) {
                 return;
@@ -1050,7 +1039,7 @@ class Parser13AMonster {
             let attackMatch;
             while (
                 (attackMatch = this.#textHandler.currentLine.match(
-                    Parser13AMonster.Namespace.SrdRegexes.attackStarterRegex
+                    Parser13AMonster.Namespace.ParsingRegexes.attackStarterRegex
                 ))
             ) {
                 const currentAttack = new Parser13AMonster.Namespace.Attack(
@@ -1062,7 +1051,7 @@ class Parser13AMonster {
                 let traitMatch;
                 while (
                     (traitMatch = this.#textHandler.currentLine.match(
-                        Parser13AMonster.Namespace.SrdRegexes.attackTraitStarterRegex
+                        Parser13AMonster.Namespace.ParsingRegexes.attackTraitStarterRegex
                     ))
                 ) {
                     const currentTrait = new Parser13AMonster.Namespace.Trait(
@@ -1086,7 +1075,7 @@ class Parser13AMonster {
 
         getMonsterTraits() {
             // Set up the text handler to the correct line
-            this.#placeTextAtStartOfBlock(Parser13AMonster.Namespace.SrdRegexes.traitStarterRegex);
+            this.#placeTextAtStartOfBlock(Parser13AMonster.Namespace.ParsingRegexes.traitStarterRegex);
 
             if (this.#textHandler.atEnd) {
                 return;
@@ -1102,9 +1091,9 @@ class Parser13AMonster {
             let currentLine;
             while (
                 ((currentLine = this.#textHandler.currentLine),
-                !currentLine.match(Parser13AMonster.Namespace.SrdRegexes.blockSeparator))
+                !currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator))
             ) {
-                if (currentLine.match(Parser13AMonster.Namespace.SrdRegexes.blockSeparator)) {
+                if (currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator)) {
                     break;
                 }
 
@@ -1114,18 +1103,18 @@ class Parser13AMonster {
                 }
 
                 let currentMatch;
-                if ((currentMatch = currentLine.match(Parser13AMonster.Namespace.SrdRegexes.traitStarterRegex))) {
+                if ((currentMatch = currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.traitStarterRegex))) {
                     lastModifiedItem = new Parser13AMonster.Namespace.Trait(
                         currentMatch.groups.trait_name,
                         currentMatch.groups.trait_desc
                     );
                     currentTraitCategory.traits.push(lastModifiedItem);
                 } else if (
-                    (currentMatch = currentLine.match(Parser13AMonster.Namespace.SrdRegexes.nastierHeaderRegex))
+                    (currentMatch = currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.nastierHeaderRegex))
                 ) {
                     currentTraitCategory = nastierSpecials;
                 } else if (
-                    (currentMatch = currentLine.match(Parser13AMonster.Namespace.SrdRegexes.attackStarterRegex))
+                    (currentMatch = currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.attackStarterRegex))
                 ) {
                     lastModifiedItem = new Parser13AMonster.Namespace.Attack(
                         currentMatch.groups.attack_name,
@@ -1133,7 +1122,7 @@ class Parser13AMonster {
                     );
                     triggeredAttacks.push(lastModifiedItem);
                 } else if (
-                    (currentMatch = currentLine.match(Parser13AMonster.Namespace.SrdRegexes.attackTraitStarterRegex))
+                    (currentMatch = currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.attackTraitStarterRegex))
                 ) {
                     if (lastModifiedItem && lastModifiedItem instanceof Parser13AMonster.Namespace.Attack) {
                         lastModifiedItem.traits.push(
@@ -1143,7 +1132,7 @@ class Parser13AMonster {
                             )
                         );
                     }
-                } else if ((currentMatch = currentLine.match(Parser13AMonster.Namespace.SrdRegexes.followUpRegex))) {
+                } else if ((currentMatch = currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.followUpRegex))) {
                     const follow_up = currentMatch.groups.follow_up;
 
                     if (lastModifiedItem) {
@@ -1161,7 +1150,7 @@ class Parser13AMonster {
         }
 
         getMonsterDefenses() {
-            const defenseRegexes = Parser13AMonster.Namespace.SrdRegexes.defensesRegex;
+            const defenseRegexes = Parser13AMonster.Namespace.ParsingRegexes.defensesRegex;
 
             this.#placeTextAtStartOfBlock(defenseRegexes.ac);
 
@@ -1266,8 +1255,8 @@ class Parser13AMonster {
         }
 
         static #cleanUpInputText(htmlText) {
-            const italicRegex = new RegExp(Parser13AMonster.Namespace.SrdRegexes.italicElement.source, "g"),
-                boldRegex = new RegExp(Parser13AMonster.Namespace.SrdRegexes.boldElement.source, "g");
+            const italicRegex = new RegExp(Parser13AMonster.Namespace.ParsingRegexes.italicElement.source, "g"),
+                boldRegex = new RegExp(Parser13AMonster.Namespace.ParsingRegexes.boldElement.source, "g");
 
             return htmlText
                 .split("\n")
@@ -1332,7 +1321,7 @@ class Parser13AMonster {
          * @return {Parser13AMonster.Namespace.Trait}
          */
         static #parseTraitLine(traitText) {
-            const traitMatch = traitText.match(Parser13AMonster.Namespace.SrdRegexes.traitStarterRegex);
+            const traitMatch = traitText.match(Parser13AMonster.Namespace.ParsingRegexes.traitStarterRegex);
 
             const traitDesc = traitMatch.groups.trait_desc;
 
@@ -1352,7 +1341,7 @@ class Parser13AMonster {
          */
         static #parseAttackLine(attackText) {
             const attackBlock = attackText.split(" ").filter((s) => !Parser13AMonster.Namespace.Helpers.isEmpty(s));
-            const attackMatch = attackBlock[0].match(Parser13AMonster.Namespace.SrdRegexes.attackStarterRegex);
+            const attackMatch = attackBlock[0].match(Parser13AMonster.Namespace.ParsingRegexes.attackStarterRegex);
 
             const attack = new Parser13AMonster.Namespace.Attack(
                 attackMatch.groups.attack_name,
@@ -1389,7 +1378,7 @@ class Parser13AMonster {
             const descriptionString = SrdHtmlParser.#translateChildrenListToIterable(descriptionWrapper.children)
                 .map((c) => c.innerText.replace(/[\s ]/, " ").trim().toLowerCase())
                 .join(" ");
-            const descriptionMatch = descriptionString.match(Parser13AMonster.Namespace.SrdRegexes.strengthLineRegex);
+            const descriptionMatch = descriptionString.match(Parser13AMonster.Namespace.ParsingRegexes.strengthLineRegex);
 
             if (!descriptionMatch) {
                 throw "Bad format for monster description";
@@ -1411,7 +1400,7 @@ class Parser13AMonster {
             const initiativeAndVulnerability = this.#fullStatBlock.children[1].children[0].innerHTML.split("<br>");
 
             const initiativeMatch = initiativeAndVulnerability[0].match(
-                Parser13AMonster.Namespace.SrdRegexes.initiativeRegex
+                Parser13AMonster.Namespace.ParsingRegexes.initiativeRegex
             );
             monsterDescription.initiative = initiativeMatch.groups.initiative;
 
@@ -1422,7 +1411,7 @@ class Parser13AMonster {
             let vulnerabilityMatch;
             if (
                 (vulnerabilityMatch = potentialVulnerabilityLine.match(
-                    Parser13AMonster.Namespace.SrdRegexes.vulnerabilityRegex
+                    Parser13AMonster.Namespace.ParsingRegexes.vulnerabilityRegex
                 ))
             ) {
                 monsterDescription.vulnerability = vulnerabilityMatch.groups.vulnerability;
@@ -1433,7 +1422,7 @@ class Parser13AMonster {
         get #hasSeparateVulnerability() {
             return (
                 this.#fullStatBlock.children[1].children[1].innerText.match(
-                    Parser13AMonster.Namespace.SrdRegexes.vulnerabilityRegex
+                    Parser13AMonster.Namespace.ParsingRegexes.vulnerabilityRegex
                 ) !== null
             );
         }
@@ -1462,7 +1451,7 @@ class Parser13AMonster {
             for (const line of attacksAndTraits) {
                 try {
                     let currentLineMatch;
-                    if ((currentLineMatch = line.match(Parser13AMonster.Namespace.SrdRegexes.attackStarterRegex))) {
+                    if ((currentLineMatch = line.match(Parser13AMonster.Namespace.ParsingRegexes.attackStarterRegex))) {
                         // check for trigger header
                         const isTriggered = currentLineMatch.groups.trigger !== undefined;
                         const attack = SrdHtmlParser.#parseAttackLine(line);
@@ -1476,10 +1465,10 @@ class Parser13AMonster {
                         continue;
                     }
 
-                    if ((currentLineMatch = line.match(Parser13AMonster.Namespace.SrdRegexes.traitStarterRegex))) {
+                    if ((currentLineMatch = line.match(Parser13AMonster.Namespace.ParsingRegexes.traitStarterRegex))) {
                         const newTrait = SrdHtmlParser.#parseTraitLine(line);
                         if (
-                            newTrait.name.match(Parser13AMonster.Namespace.SrdRegexes.standardAttackTraitNames) &&
+                            newTrait.name.match(Parser13AMonster.Namespace.ParsingRegexes.standardAttackTraitNames) &&
                             lastModifiedItem
                         ) {
                             lastModifiedItem.traits.push(newTrait);
@@ -1494,7 +1483,7 @@ class Parser13AMonster {
                         continue;
                     }
 
-                    if ((currentLineMatch = line.match(Parser13AMonster.Namespace.SrdRegexes.nastierHeaderRegex))) {
+                    if ((currentLineMatch = line.match(Parser13AMonster.Namespace.ParsingRegexes.nastierHeaderRegex))) {
                         currentTraitCategory = nastierTraitCategory;
                         continue;
                     }
@@ -1545,11 +1534,11 @@ class Parser13AMonster {
             matchedDefenses.forEach((elem, index) => {
                 const name = elem[0],
                     value = elem[1];
-                if (name.match(Parser13AMonster.Namespace.SrdRegexes.defensesRegex.anyDefense)) {
+                if (name.match(Parser13AMonster.Namespace.ParsingRegexes.defensesRegex.anyDefense)) {
                     defenses[name] = value;
                 } else {
                     const namePrevious = matchedDefenses[index - 1][0];
-                    const additionalInfoMatch = name.match(Parser13AMonster.Namespace.SrdRegexes.defensesRegex.other);
+                    const additionalInfoMatch = name.match(Parser13AMonster.Namespace.ParsingRegexes.defensesRegex.other);
                     defenses[namePrevious] += ` (${additionalInfoMatch.groups.name}: ${value})`;
                 }
             });
