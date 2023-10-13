@@ -193,10 +193,14 @@ class Parser13AMonster {
         }
 
         #getFullAttack(attackName, attackDesc) {
+            this.#textHandler.advanceIndex()
+            const description = this.#getDescription(attackDesc)
+            const traits = this.#getTraits()
+
             return new Parser13AMonster.Namespace.Attack(
                 attackName,
-                this.#getDescription(attackDesc),
-                this.#getTraits()
+                description,
+                traits
             );
         }
 
@@ -880,7 +884,7 @@ class Parser13AMonster {
         }
 
         static get attackTraitStarterRegex() {
-            return /^ (?<trait_name>.+)(?<![RC]): ?(?<trait_desc>.*)/;
+            return /^ ?(?<trait_name>.+)(?<![RC]): ?(?<trait_desc>.*)/;
         }
 
         static get standardAttackTraitNames() {
