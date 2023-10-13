@@ -491,10 +491,14 @@ class Parser13AMonster {
             this.#quickAddContext = quickAddApi;
         }
 
+        #getQuickAddField(fieldName) {
+            return this.#quickAddContext.variables[fieldName]
+        }
+
         #updateQuickAddField(fieldName, fieldContent) {
             // Since we're either creating or updating a field that contains an array in the global QuickAdd object, we can just
             // put everything into an array, flatten it, then filter out the possibility that there wasn't anything in the field yet
-            const updatedContent = [this.#quickAddContext.variables[fieldName], fieldContent]
+            const updatedContent = [this.#getQuickAddField(fieldName), fieldContent]
                 .flat()
                 .filter((field) => field !== undefined);
             this.#quickAddContext.variables[fieldName] = updatedContent;
@@ -549,8 +553,8 @@ class Parser13AMonster {
             const attackText = await this.#quickAddContext.quickAddApi.wideInputPrompt(
                 "Monster Attacks (including [Special Trigger])?"
             );
-            const attackParser = new Parser13AMonster.Namespace.BlockParser(attackText);
 
+            const attackParser = new Parser13AMonster.Namespace.BlockParser(attackText);
             const parsedAttacks = attackParser.parseAttackBlock();
 
             const updatedAttacks = {
@@ -563,8 +567,13 @@ class Parser13AMonster {
         }
 
         async getMonsterTraits() {
-            const traitText = await this.#quickAddContext.quickAddApi.wideInputPrompt("Monster Traits?");
-            const traitParser = new Parser13AMonster.Namespace.BlockParser(traitText);
+            const text = await this.#quickAddContext.quickAddApi.wideInputPrompt("Monster Traits?");
+
+            if (!text) {
+                return
+            }
+
+            const traitParser = new Parser13AMonster.Namespace.BlockParser(text);
             const traits = traitParser.parseTraitBlock();
 
             const updatedTraits = this.#updateQuickAddField("traits", traits);
@@ -573,21 +582,33 @@ class Parser13AMonster {
         }
 
         async getMonsterTriggeredActions() {
-            const attackText = await this.#quickAddContext.quickAddApi.wideInputPrompt("Monster Triggered Attacks?");
-            const attackParser = new Parser13AMonster.Namespace.BlockParser(attackText);
+            const text = await this.#quickAddContext.quickAddApi.wideInputPrompt("Monster Triggered Attacks?");
 
-            const parsedAttacks = attackParser.parseAttackBlock();
-            const triggeredAttacks = [...parsedAttacks.attacks, ...parsedAttacks.triggeredAttacks];
-            const updatedTriggeredActions = this.#updateQuickAddField("triggerActions", triggeredAttacks);
+            let updatedTriggeredActions;
+
+            if (text) {
+                const attackParser = new Parser13AMonster.Namespace.BlockParser(text);
+
+                const parsedAttacks = attackParser.parseAttackBlock();
+                const triggeredAttacks = [...parsedAttacks.attacks, ...parsedAttacks.triggeredAttacks];
+                updatedTriggeredActions = this.#updateQuickAddField("triggerActions", triggeredAttacks);
+            } else {
+                updatedTriggeredActions = this.#getQuickAddField("triggerActions");
+            }
 
             return Parser13AMonster.Namespace.BlockWriter.writeTriggeredAttacksBlock(updatedTriggeredActions);
         }
 
         async getMonsterNastierTraits() {
-            const traitText = await this.#quickAddContext.quickAddApi.wideInputPrompt(
+            const text = await this.#quickAddContext.quickAddApi.wideInputPrompt(
                 'Monster Nastier Specials? (remove "Nastier Specials" header if possible)'
             );
-            const traitParser = new Parser13AMonster.Namespace.BlockParser(traitText);
+
+            if (!text) {
+                return
+            }
+
+            const traitParser = new Parser13AMonster.Namespace.BlockParser(text);
             const updatedTraits = this.#updateQuickAddField("nastierTraits", traitParser.parseTraitBlock());
 
             return Parser13AMonster.Namespace.BlockWriter.writeNastierTraitsBlock(updatedTraits);
@@ -604,20 +625,6 @@ class Parser13AMonster {
             return Parser13AMonster.Namespace.BlockWriter.writeDefenseBlock(monsterDefenses);
         }
 
-        async getSrdStatblockFromRawText() {
-            const srdText = await this.#quickAddContext.quickAddApi.wideInputPrompt(
-                "Manually copy the text from the online SRD (from Name to HP) and paste here"
-            );
-
-            const srdParser = new Parser13AMonster.Namespace.SrdBlockParser(srdText);
-
-            const monsterDescription = srdParser.getMonsterDescription();
-            this.#quickAddContext.variables = Object.assign(this.#quickAddContext.variables, monsterDescription);
-            const statblock = srdParser.getFullMonster();
-
-            return Parser13AMonster.Namespace.BlockWriter.writeFullMonster(statblock);
-        }
-
         async promptMinimalistParser() {
             return [
                 await this.getMonsterDescription(),
@@ -626,11 +633,7 @@ class Parser13AMonster {
                 await this.getMonsterNastierTraits(),
                 await this.getMonsterTriggeredActions(),
                 await this.getMonsterDefenses(),
-            ].join("\n");
-        }
-
-        async promptSrdBlockParser() {
-            return [await this.getSrdStatblockFromRawText()].join("\n");
+            ].filter((s) => s).join("\n");
         }
 
         async promptSrdHtmlParser() {
