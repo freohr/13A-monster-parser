@@ -228,6 +228,67 @@ class Parser13AMonster {
             };
         }
 
+        parseAttackLines() {
+            const attacks = [],
+                triggeredAttacks = [];
+
+            let lastParsedAttack = undefined,
+                isTriggered = false,
+                currentThing = undefined;
+
+            const finalizeThing = (thing, isTriggered) => {
+                if (!thing) {
+                    return
+                }
+
+                if (thing instanceof Parser13AMonster.Namespace.Attack) {
+                    lastParsedAttack = thing
+                    if (isTriggered) {
+                        triggeredAttacks.push(thing)
+                    } else {
+                        attacks.push(thing)
+                    }
+                } else if (thing instanceof Parser13AMonster.Namespace.Trait) {
+                    lastParsedAttack.traits.push(thing);                        
+                }
+
+                currentThing = undefined
+            }
+
+            const appendDescription = (thing, desc) => {
+                const descLines = [thing.description, desc]
+
+                thing.description = descLines.map((s) => s.trim()).join(" ")
+            }
+
+            while (!this.#textHandler.atEnd) {
+                const currentLine = this.#textHandler.currentLine
+
+                let match;
+
+                if ((match = currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.attackStarterRegex))) {
+                    finalizeThing(currentThing);
+                    currentThing = new Parser13AMonster.Namespace.Attack(match.groups.attack_name, match.groups.attack_desc)
+                    lastParsedAttack = currentThing
+                    isTriggered = match.groups.trigger != undefined
+                } else if ((match = currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.traitStarterRegex))) {
+                    finalizeThing(currentThing);
+                    currentThing = new Parser13AMonster.Namespace.Trait(match.groups.trait_name, match.groups.trait_desc)
+                } else {
+                    appendDescription(currentThing, currentLine)
+                }
+
+                this.#textHandler.advanceIndex()
+            }
+
+            finalizeThing(currentThing)
+
+            return {
+                attacks: attacks,
+                triggeredAttacks: triggeredAttacks,
+            };
+        }
+
         parseTraitBlock() {
             if (this.#textHandler.currentLine.startsWith("Nastier Specials")) {
                 this.#textHandler.advanceIndex();
@@ -563,7 +624,7 @@ class Parser13AMonster {
             );
 
             const attackParser = new Parser13AMonster.Namespace.BlockParser(attackText);
-            const parsedAttacks = attackParser.parseAttackBlock();
+            const parsedAttacks = attackParser.parseAttackLines();
 
             const updatedAttacks = {
                 actions: this.#updateQuickAddField("actions", parsedAttacks.attacks),
@@ -597,7 +658,7 @@ class Parser13AMonster {
             if (text) {
                 const attackParser = new Parser13AMonster.Namespace.BlockParser(text);
 
-                const parsedAttacks = attackParser.parseAttackBlock();
+                const parsedAttacks = attackParser.parseAttackLines();
                 const triggeredAttacks = [...parsedAttacks.attacks, ...parsedAttacks.triggeredAttacks];
                 updatedTriggeredActions = this.#updateQuickAddField("triggerActions", triggeredAttacks);
             } else {
