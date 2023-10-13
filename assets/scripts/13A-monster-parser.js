@@ -310,6 +310,14 @@ class Parser13AMonster {
             let defenseMatch;
 
             while (!this.#textHandler.atEnd) {
+                if ((defenseMatch = this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.defensesRegex.allDefensesOneLine))) {
+                    defenses["ac"] = defenseMatch.groups["ac"]
+                    defenses["pd"] = defenseMatch.groups["pd"]
+                    defenses["md"] = defenseMatch.groups["md"]
+                    defenses["hp"] = defenseMatch.groups["hp"]
+                    break;
+                }
+
                 if ((defenseMatch = this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.defensesRegex.anyDefenseOneLine))) {
                     defenses[defenseMatch.groups.name.toLowerCase()] = parseInt(defenseMatch.groups.value);
                 }
@@ -930,6 +938,7 @@ class Parser13AMonster {
                 hp: /^HP/i,
                 anyDefense: /^(AC|PD|MD|HP)/i,
                 anyDefenseOneLine: /^(?<name>AC|PD|MD|HP) (?<value>\d+)$/i,
+                allDefensesOneLine: /^AC (?<ac>\d+) PD (?<pd>\d+) MD (?<md>\d+) HP (?<hp>\d+)/i,
                 other: /^\((?<name>.+)\)+/,
                 value: /^(?<value>\d+)/,
             };
