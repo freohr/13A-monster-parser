@@ -48,8 +48,8 @@ class Parser13AMonster {
         #traits = [];
 
         constructor(name, description, traits) {
-            this.#name = name;
-            this.#description = description;
+            this.#name = name.trim();
+            this.#description = description.trim();
             this.#traits = traits ?? [];
         }
 
@@ -81,8 +81,8 @@ class Parser13AMonster {
         #traits = [];
 
         constructor(name, description, traits) {
-            this.#name = name;
-            this.#description = description;
+            this.#name = name.trim();
+            this.#description = description.trim();
             this.#traits = traits ?? [];
         }
 
@@ -952,7 +952,7 @@ class Parser13AMonster {
         }
 
         static get attackStarterRegex() {
-            return /^(?<trigger>\[Special Trigger])?(?<attack_name>((\[.*] ?)?[CR]:)?[^:]+) ?— ?(?<attack_desc>.*)/i;
+            return /^(?<trigger>\[Special Trigger])?(?<attack_name>((\[.*] ?)?[CR]:)?[^:]+)( ?— ?| - )(?<attack_desc>.*)/i;
         }
 
         static get attackTraitStarterRegex() {
