@@ -948,11 +948,11 @@ class Parser13AMonster {
 
     ParsingRegexes = class ParsingRegexes {
         static get strengthLineRegex() {
-            return /(?<strength>\S+)? ?(((?<ordinal>(?<level>\d+)\s*(st|nd|rd|th)) )level|level (?<levelAfter>\d+)) (?<role>\S+) \[(?<type>\S+)]/i;
+            return /(?<strength>\S+)? ?(((?<ordinal>(?<level>\d+)\s*(st|nd|rd|th))[ -])level|level (?<levelAfter>\d+)) (?<role>\S+) \[(?<type>\S+)]/i;
         }
 
         static get attackStarterRegex() {
-            return /^(?<trigger>\[Special Trigger])?(?<attack_name>((\[.*] ?)?[CR]:)?[^:]+)( ?— ?| - )(?<attack_desc>.*)/i;
+            return /^(?<trigger>\[Special Trigger] )?(?<attack_name>(\[.+] )?([CR]: )?[^:]*?) ?[—\-–] ?(?<attack_desc>.*)$/i;
         }
 
         static get attackTraitStarterRegex() {
@@ -999,7 +999,7 @@ class Parser13AMonster {
                 hp: /^HP/i,
                 anyDefense: /^(AC|PD|MD|HP)/i,
                 anyDefenseOneLine: /^(?<name>AC|PD|MD|HP) (?<value>\d+)$/i,
-                allDefensesOneLine: /^AC (?<ac>\d+) PD (?<pd>\d+) MD (?<md>\d+) HP (?<hp>\d+)/i,
+                allDefensesOneLine: /^AC +(?<ac>\d+) +PD +(?<pd>\d+) +MD +(?<md>\d+) +HP +(?<hp>\d+)/i,
                 other: /^\((?<name>.+)\)+/,
                 value: /^(?<value>\d+)/,
             };
