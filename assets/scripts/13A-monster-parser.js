@@ -335,7 +335,7 @@ class Parser13AMonster {
             while (
                 !this.#textHandler.atEnd &&
                 this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.strengthLineRegex) ===
-                null
+                    null
             ) {
                 flavorText.push(this.#textHandler.currentLine);
                 this.#textHandler.advanceIndex();
@@ -1254,7 +1254,7 @@ class Parser13AMonster {
             let currentLine;
             while (
                 ((currentLine = this.#textHandler.currentLine),
-                    !currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator))
+                !currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator))
             ) {
                 if (currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator)) {
                     break;
@@ -1841,10 +1841,29 @@ class Parser13AMonster {
             return traitData;
         }
 
+        async createFoundryActor(actorData, actorItemData) {
+            const actor = await Actor.create(actorData);
+            await actor.createEmbeddedDocuments("Item", actorItemData);
+            return actor;
+        }
+
         /**
          * @param {Parser13AMonster.Namespace.FullStatBlock} monsterData
          */
-        async createMonsterSheet(monsterData) {
+        createFoundryMonsterItemsData(monsterData) {
+            const actionData = monsterData.attacks
+                .map((attack) => this.transformAttack(attack, false))
+                .concat(monsterData.triggeredAttacks.map((attack) => this.transformAttack(attack, true)))
+                .concat(monsterData.traits.map((trait) => this.transformTrait(trait, false)))
+                .concat(monsterData.nastierTraits.map((trait) => this.transformTrait(trait, true)));
+
+            return actionData;
+        }
+
+        /**
+         * @param {Parser13AMonster.Namespace.FullStatBlock} monsterData
+         */
+        createFoundryMonsterData(monsterData) {
             const baseAttrObject = {
                 base: 10,
                 min: 0,
@@ -1891,16 +1910,16 @@ class Parser13AMonster {
 
             const getSystemSize = (sizeText) => {
                 if (!sizeText) {
-                    return "normal"
+                    return "normal";
                 }
 
-                const multiStrengthMatch = sizeText.match(/^(Double|Triple)-strength/i)
+                const multiStrengthMatch = sizeText.match(/^(Double|Triple)-strength/i);
                 if (multiStrengthMatch) {
-                    return multiStrengthMatch[1].toLowerCase()
+                    return multiStrengthMatch[1].toLowerCase();
                 }
 
-                return sizeText.toLowerCase()
-            }
+                return sizeText.toLowerCase();
+            };
 
             actorDetails.size = {
                 value: getSystemSize(monsterData.size),
@@ -1913,23 +1932,23 @@ class Parser13AMonster {
                 details: actorDetails,
             };
 
-            actorData.prototypeToken = { name: monsterData.name, displayBars: 40 };
+            actorData.prototypeToken = {
+                name: monsterData.name,
+                displayBars: 40,
+                prependAdjective: true,
+                displayName: 20,
+            };
 
-            const actor = await Actor.create(actorData);
-
-            const actionData = monsterData.attacks
-                .map((attack) => this.transformAttack(attack, false))
-                .concat(monsterData.triggeredAttacks.map((attack) => this.transformAttack(attack, true)))
-                .concat(monsterData.traits.map((trait) => this.transformTrait(trait, false)))
-                .concat(monsterData.nastierTraits.map((trait) => this.transformTrait(trait, true)));
-
-            await actor.createEmbeddedDocuments("Item", actionData);
-
-            return actor;
+            return actorData;
         }
 
         async getFullMonster() {
             const monsterText = await this.#promptForMonsterText();
+
+            if (!monsterText) {
+                ui.notifications.warn("No monster to parse.");
+                return;
+            }
 
             const description = this.#getMonsterDescription(monsterText.descriptionText);
 
@@ -2056,4 +2075,11 @@ class Parser13AMonster {
             return value;
         }
     };
+}
+
+if (game) {
+    const parser = new Parser13AMonster.Namespace.FoundryParser();
+const monster = await parser.getFullMonster();
+console.log(monster)
+parser.createMonsterSheet(monster);
 }

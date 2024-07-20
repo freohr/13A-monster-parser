@@ -10,16 +10,19 @@ This repo does not include any actual statblocks, the tools within are to be use
 
 ### Dependencies
 
-- [CustomJS](https://github.com/saml-dev/obsidian-custom-js): to run the parser's Javascript from a dedicated script file
-- [QuickAdd](https://quickadd.obsidian.guide/docs/): to create a file from the template via prompters
-- [Fantasy Statblocks](https://plugins.javalent.com/statblocks): to render the statblocks
+-   [CustomJS](https://github.com/saml-dev/obsidian-custom-js): to run the parser's Javascript from a dedicated script file
+-   [QuickAdd](https://quickadd.obsidian.guide/docs/): to create a file from the template via prompters
+-   [Fantasy Statblocks](https://plugins.javalent.com/statblocks): to render the statblocks
 
 ## How to Use
 
-### First Setup
+### In Obsidian
+
+#### First Setup
 
 1. Install and enable the [needed dependencies](#dependencies) in your vault
 2. From this repo, download the `assets` folder and its content, and put them somewhere in your vault (I like having an `assets` dir at the root of my vaults to group this kind of files and be able to locate them easily with core functionnalities and plugins). The suggested structure is:
+
 ```
 assets
   |- scripts
@@ -27,38 +30,39 @@ assets
   |- templates
       |- monster-statblock-parser.md
 ```
+
 3. In the **CustomJS** config, in the `Individual Files` field, put `[/path/from/vault/root]/assets/scripts/13A-monster-parser.js` (or the path you've chosen pointing to the parser's JS file)
 4. In the **QuickAdd** config:
-   1. Put the path to your template folder (containing the template from this repo) in the `Template Folder Path` field
-   2. Create a `Template` choice, named however you want (e.g. `13th Age Monster Parser`)
-   3. Click on `Configure [template-name]` (in the list of choices, the small cog right of your newly created choice), then
-      1. In `Template Path`, put the path to the template (the field is a suggester, so you can type `13A-monster-[etc.]` to find it easily)
-      2. Enable `File Name Format`, then put `{{value}}` in the field
-      3. Enable `Create in Folder` (to be able to choose where the new file will be created), then configure which folder you want for that
-          - Enabling `Choose Folder when creating a note` allows you to put the new note anywhere in your vault, or
-          - Disabling that, and selecting a few dedicated folders can help you centralise your monsters
-      4. Disable `Create in same folder as active file`
-      5. Disable `Append Link`
-      6. Enable `Set default behavior if file exists`, and choose `None`, so that you don't overwrite your existing monsters when you import a new one (this can happen if 3rd party publishers choose the same name as an official monster, or 2 publishers name their monsters the same, or if you import the same monster by accident)
-      7. You can enable `Open`, and then select `Source` to open the newly imported monster when finished (to check that everything was imported correctly)
-      8. For `New Split`, choose which behavior you prefer (I prefer disabling it)
-      9. Enable `Focus new pane` to focus the newly created note when finished
+    1. Put the path to your template folder (containing the template from this repo) in the `Template Folder Path` field
+    2. Create a `Template` choice, named however you want (e.g. `13th Age Monster Parser`)
+    3. Click on `Configure [template-name]` (in the list of choices, the small cog right of your newly created choice), then
+        1. In `Template Path`, put the path to the template (the field is a suggester, so you can type `13A-monster-[etc.]` to find it easily)
+        2. Enable `File Name Format`, then put `{{value}}` in the field
+        3. Enable `Create in Folder` (to be able to choose where the new file will be created), then configure which folder you want for that
+            - Enabling `Choose Folder when creating a note` allows you to put the new note anywhere in your vault, or
+            - Disabling that, and selecting a few dedicated folders can help you centralise your monsters
+        4. Disable `Create in same folder as active file`
+        5. Disable `Append Link`
+        6. Enable `Set default behavior if file exists`, and choose `None`, so that you don't overwrite your existing monsters when you import a new one (this can happen if 3rd party publishers choose the same name as an official monster, or 2 publishers name their monsters the same, or if you import the same monster by accident)
+        7. You can enable `Open`, and then select `Source` to open the newly imported monster when finished (to check that everything was imported correctly)
+        8. For `New Split`, choose which behavior you prefer (I prefer disabling it)
+        9. Enable `Focus new pane` to focus the newly created note when finished
 5. In the **Fantasy Statblocks** config:
-   1. If you're prepping for a 13th Age campaign, I suggest putting the `Default Layout` config to `Basic 13th Age Monster Layout` so that you don't have to add the `layout: Basic 13th Age Monster Layout` line to your statblock YAML config everytime.
-   2. For the rest, the module can do a lot more than just rendering statblocks, so configure it to your needs and liking.
+    1. If you're prepping for a 13th Age campaign, I suggest putting the `Default Layout` config to `Basic 13th Age Monster Layout` so that you don't have to add the `layout: Basic 13th Age Monster Layout` line to your statblock YAML config everytime.
+    2. For the rest, the module can do a lot more than just rendering statblocks, so configure it to your needs and liking.
 
 Example of QuickAdd config: ![](readme/quick-add-config.png)
 
-### Parsing a monster
+#### Parsing a monster
 
-#### From the SRD
+##### From the SRD
 
-First, 
+First,
 
 Then, setup CustomJS and QuickAdd following the [instructions](#first-setup). For QuickAdd, there are 2 options provided:
 
 1. manually Copy/Paste the raw text from the page in your browser -> Use [13A-srd-monster-statblock-parser.md](assets/templates/13A-srd-monster-statblock-parser.md) as the QuickAdd template
-2. After downloading [the full page of monsters](https://www.13thagesrd.com/monsters) (I recommend using https://github.com/deathau/markdownload which will retain the HTML for the monster's table), copy/paste the HTML code for the monster -> Use  [13A-srd-monster-statblock-html-parser.md](assets/templates/13A-srd-monster-statblock-html-parser.md) as the QuickAdd template
+2. After downloading [the full page of monsters](https://www.13thagesrd.com/monsters) (I recommend using https://github.com/deathau/markdownload which will retain the HTML for the monster's table), copy/paste the HTML code for the monster -> Use [13A-srd-monster-statblock-html-parser.md](assets/templates/13A-srd-monster-statblock-html-parser.md) as the QuickAdd template
 
 Then, you can trigger QuickAdd to create a new note using the option you just created.
 
@@ -66,7 +70,7 @@ Here's an example of import from the SRD's HTML:
 
 https://github.com/freohr/obsidian-13A-monster-parser/assets/3462951/0212c851-c3ea-47e5-a98e-a3b76dae2476
 
-#### From a PDF (1st or 3rd Party)
+##### From a PDF (1st or 3rd Party)
 
 For now, the parser only exists as a minimalist set of prompters. In order, the parser will prompt you for:
 
@@ -84,7 +88,7 @@ For now, the parser only exists as a minimalist set of prompters. In order, the 
 4. The monster's **"Nastier Specials"**, if any
     - Any traits grouped under the `Nastier Specials` heading
     - /!\ **Important manual step**: If there are any traits (expected format `[Trait Name/Roll trigger]: [trait effect]`), their name must be on a single line (up to and including the semicolon), because the parser cannot distinguish between the start of... same thing as above.
-    - /!\  **Important note**: If a **nastier** adds an attack to the monster, **do not put it in this prompt**. The parser will not be able to interpret it correctly, put it in the next section 
+    - /!\ **Important note**: If a **nastier** adds an attack to the monster, **do not put it in this prompt**. The parser will not be able to interpret it correctly, put it in the next section
 5. the monster's **"Special Triggers"**, if there are some not included in its attacks
     - Sometimes, a trait will have a triggered action that is not labeled `[Special Trigger]` (looking at you, [Fire Giant](https://www.13thagesrd.com/monsters/#Fire_Giant) and the **nastier** _Strength of Giants_). Just put every remaining attacks in this prompt
 6. the monster's **Defenses**
@@ -96,35 +100,43 @@ Here's a picture showing which part of the monster's statblock is which block:
 
 ![example-blocks-fire-giant.png](readme/example-blocks-fire-giant.png)
 
+### In Foundry
+
+/!\ Important: Only the PDF parser works for Foundry VTT
+
+1. Open the [script file](./assets/scripts/13A-monster-parser.js)
+2. In your 13th Age world, Create a new macro, select `Global` for Scope and `Script` for type
+3. Dump the entire script content into the macro field
+4. Call the macro when you want to import a new monster, and follow the instructions in [Parsing a Monster > From a PDF](#from-a-pdf-1st-or-3rd-party)
+
 ## ToDo
 
 In no particular order:
 
-- [x] Write parser for the various blocks in a monster Statblock 
-  - [x] Monster Desc,
-  - [x] Attacks
-  - [x] (including Triggered Attacks),
-  - [x] Traits,
-  - [x] Nastier Specials,
-  - [x] Defenses
-- [x] Write the YAML Writer
-  - [x] Monster Desc,
-  - [x] Attacks
-  - [x] (including Triggered Attacks),
-  - [x] Traits,
-  - [x] Nastier Specials,
-  - [x] Defenses
-- [x] Write a barebones QuickAdd prompter
-  - Intended order of prompting: 
-  - [x] Monster Desc, 
-  - [x] Attacks 
-  - [x] (including Triggered Attacks),
-  - [x] Traits, 
-  - [x] Nastier Specials,
-  - [x] Defenses
-- [x] Put all that in a Markdown file to be used as a QuickAdd template
-- [ ] Write a cleaned-up prompter with which you can choose which block to parse next
-- [ ] Add a prompter to manually enter single attacks or partial attack blocks (triggered or not) and traits (because the 13A official statblock format is only 90% standardized >.> )
-- [ ] Create a [Templater](https://silentvoid13.github.io/Templater/introduction.html) variant that can add partial monster data.
-- [ ] Add a full parsing example with pictures and explicative text.
-
+-   [x] Write parser for the various blocks in a monster Statblock
+    -   [x] Monster Desc,
+    -   [x] Attacks
+    -   [x] (including Triggered Attacks),
+    -   [x] Traits,
+    -   [x] Nastier Specials,
+    -   [x] Defenses
+-   [x] Write the YAML Writer
+    -   [x] Monster Desc,
+    -   [x] Attacks
+    -   [x] (including Triggered Attacks),
+    -   [x] Traits,
+    -   [x] Nastier Specials,
+    -   [x] Defenses
+-   [x] Write a barebones QuickAdd prompter
+    -   Intended order of prompting:
+    -   [x] Monster Desc,
+    -   [x] Attacks
+    -   [x] (including Triggered Attacks),
+    -   [x] Traits,
+    -   [x] Nastier Specials,
+    -   [x] Defenses
+-   [x] Put all that in a Markdown file to be used as a QuickAdd template
+-   [ ] Write a cleaned-up prompter with which you can choose which block to parse next
+-   [ ] Add a prompter to manually enter single attacks or partial attack blocks (triggered or not) and traits (because the 13A official statblock format is only 90% standardized >.> )
+-   [ ] Create a [Templater](https://silentvoid13.github.io/Templater/introduction.html) variant that can add partial monster data.
+-   [ ] Add a full parsing example with pictures and explicative text.
