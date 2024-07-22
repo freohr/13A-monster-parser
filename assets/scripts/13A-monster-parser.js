@@ -1,4 +1,4 @@
-class Parser13AMonster {
+export class Parser13AMonster {
     static Namespace = new Parser13AMonster();
     Helpers = class Helpers {
         static stringToPascalCase(string) {
@@ -218,6 +218,7 @@ class Parser13AMonster {
                         Parser13AMonster.Namespace.ParsingRegexes.attackStarterRegex,
                     ))
                 ) {
+                    this.#textHandler.advanceIndex();
                     const newAttack = this.#getFullAttack(
                         startAttackMatch.groups.attack_name,
                         startAttackMatch.groups.attack_desc,
