@@ -552,6 +552,8 @@ export class Parser13AMonster {
         }
 
         static #writeObjectToYaml(statObject) {
+            if (!statObject) return;
+
             const outputYAMLArray = [];
 
             Object.entries(statObject).map(([key, value]) => BlockWriter.#pushTrait(outputYAMLArray, key, value));
@@ -560,10 +562,14 @@ export class Parser13AMonster {
         }
 
         static writeDescriptionBlock(descriptionBlock) {
+            if (!descriptionBlock) return;
+
             return BlockWriter.#writeObjectToYaml(descriptionBlock);
         }
 
         static writeDefenseBlock(defenseBlock) {
+            if (!defenseBlock) return;
+
             return BlockWriter.#writeObjectToYaml(defenseBlock);
         }
 
