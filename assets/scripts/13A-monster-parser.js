@@ -18,6 +18,7 @@ export class Parser13AMonster {
             if (stuff === undefined) return true;
             if (Array.isArray(stuff) && stuff.length === 0) return true;
             if (typeof stuff === "string" && stuff.length === 0) return true;
+            if (stuff instanceof Set) return stuff.size === 0;
             return Object.entries(stuff).length === 0;
         }
 
@@ -90,6 +91,10 @@ export class Parser13AMonster {
             this.#traits = traits ?? [];
         }
 
+        equals(other) {
+            return other instanceof Attack && other.name === this.name;
+        }
+
         get name() {
             return this.#name;
         }
@@ -149,15 +154,11 @@ export class Parser13AMonster {
         }
     };
 
-    BlockParser = class BlockParser {
+    PdfBlockParser = class BlockParser {
         #textHandler;
 
         constructor(textBlock) {
             this.#textHandler = new Parser13AMonster.Namespace.TextHandler(textBlock);
-        }
-
-        static get #followupRegex() {
-            return /^([^:—]+|[^a-z].+)$/i;
         }
 
         #getDescription(descStarter) {
@@ -166,7 +167,9 @@ export class Parser13AMonster {
 
             while (
                 !this.#textHandler.atEnd &&
-                (desc = this.#textHandler.currentLine.match(BlockParser.#followupRegex)) !== null
+                (desc = this.#textHandler.currentLine.match(
+                    Parser13AMonster.Namespace.ParsingRegexes.pdfFollowUpRegex,
+                )) !== null
             ) {
                 fullDesc.push(this.#textHandler.currentLine);
                 this.#textHandler.advanceIndex();
@@ -176,34 +179,54 @@ export class Parser13AMonster {
         }
 
         #getTraits() {
-            const traits = [];
-            let traitMatch;
+            const traits = [],
+                triggeredAttacks = [];
+            let match;
 
-            while (
-                !this.#textHandler.atEnd &&
-                (traitMatch = this.#textHandler.currentLine.match(
-                    Parser13AMonster.Namespace.ParsingRegexes.traitStarterRegex,
-                )) !== null
-            ) {
-                this.#textHandler.advanceIndex();
+            while (!this.#textHandler.atEnd) {
+                if (
+                    (match = this.#textHandler.currentLine.match(
+                        Parser13AMonster.Namespace.ParsingRegexes.traitStarterRegex,
+                    )) !== null
+                ) {
+                    this.#textHandler.advanceIndex();
 
-                traits.push(
-                    new Parser13AMonster.Namespace.Trait(
-                        traitMatch.groups.trait_name,
-                        this.#getDescription(traitMatch.groups.trait_desc),
-                    ),
-                );
+                    traits.push(
+                        new Parser13AMonster.Namespace.Trait(
+                            match.groups.trait_name,
+                            this.#getDescription(match.groups.trait_desc),
+                        ),
+                    );
+                } else if (
+                    (match = this.#textHandler.currentLine.match(
+                        Parser13AMonster.Namespace.ParsingRegexes.attackStarterRegex,
+                    )) !== null
+                ) {
+                    this.#textHandler.advanceIndex();
+                    const newAttack = this.#getBasicAttack(
+                        match.groups.attack_name,
+                        match.groups.attack_desc,
+                    );
+
+                    triggeredAttacks.push(newAttack);
+                } else {
+                    break;
+                }
             }
 
-            return traits;
+            return { traits: traits, triggeredAttacks: triggeredAttacks };
+        }
+
+        #getBasicAttack(attackName, attackDesc) {
+            return new Parser13AMonster.Namespace.Attack(attackName, this.#getDescription(attackDesc), null);
         }
 
         #getFullAttack(attackName, attackDesc) {
-            this.#textHandler.advanceIndex();
-            const description = this.#getDescription(attackDesc);
-            const traits = this.#getTraits();
-
-            return new Parser13AMonster.Namespace.Attack(attackName, description, traits);
+            return new Parser13AMonster.Namespace.Attack(
+                attackName,
+                this.#getDescription(attackDesc),
+                this.#getTraits(),
+            );
         }
 
         parseAttackBlock() {
@@ -336,7 +359,7 @@ export class Parser13AMonster {
             while (
                 !this.#textHandler.atEnd &&
                 this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.strengthLineRegex) ===
-                    null
+                null
             ) {
                 flavorText.push(this.#textHandler.currentLine);
                 this.#textHandler.advanceIndex();
@@ -615,7 +638,7 @@ export class Parser13AMonster {
             // put everything into an array, flatten it, then filter out the possibility that there wasn't anything in the field yet
             const updatedContent = [this.#getQuickAddField(fieldName), fieldContent]
                 .flat()
-                .filter((field) => field !== undefined);
+                .filter((field) => field);
             this.#quickAddContext.variables[fieldName] = updatedContent;
 
             return updatedContent;
@@ -656,7 +679,7 @@ export class Parser13AMonster {
             const desc = await this.#quickAddContext.quickAddApi.wideInputPrompt(
                 "Monster Description? (Put the Monster's name on the first line if multi-lines)",
             );
-            const descParser = new Parser13AMonster.Namespace.BlockParser(desc);
+            const descParser = new Parser13AMonster.Namespace.PdfBlockParser(desc);
 
             const monsterDescription = descParser.parseDescriptionBlock();
             this.#quickAddContext.variables = Object.assign(this.#quickAddContext.variables, monsterDescription);
@@ -672,13 +695,12 @@ export class Parser13AMonster {
             const attackParser = new Parser13AMonster.Namespace.BlockParser(attackText);
             const parsedAttacks = attackParser.parseAttackLines();
 
-            const updatedAttacks = {
-                actions: this.#updateQuickAddField("actions", parsedAttacks.attacks),
-                triggeredActions: this.#updateQuickAddField("triggered_actions", parsedAttacks.triggeredAttacks),
-            };
+            const updatedAttacks = this.#updateQuickAddField("actions", parsedAttacks.attacks);
+
+            this.#updateQuickAddField("triggered_actions", parsedAttacks.triggeredAttacks);
 
             // We don't return the parsed triggered attacks right now, but we store them for later
-            return Parser13AMonster.Namespace.BlockWriter.writeStandardAttacksBlock(updatedAttacks.actions);
+            return Parser13AMonster.Namespace.BlockWriter.writeStandardAttacksBlock(updatedAttacks);
         }
 
         async getMonsterTraits() {
@@ -691,7 +713,10 @@ export class Parser13AMonster {
             const traitParser = new Parser13AMonster.Namespace.BlockParser(text);
             const traits = traitParser.parseTraitBlock();
 
-            const updatedTraits = this.#updateQuickAddField("traits", traits);
+            const updatedTraits = this.#updateQuickAddField("traits", traits.traits);
+
+            // We don't return the parsed triggered attacks right now, but we store them for later
+            this.#updateQuickAddField("triggered_actions", traits.triggeredActions);
 
             return Parser13AMonster.Namespace.BlockWriter.writeStandardTraitsBlock(updatedTraits);
         }
@@ -702,7 +727,7 @@ export class Parser13AMonster {
             let updatedTriggeredActions;
 
             if (text) {
-                const attackParser = new Parser13AMonster.Namespace.BlockParser(text);
+                const attackParser = new Parser13AMonster.Namespace.PdfBlockParser(text);
 
                 const parsedAttacks = attackParser.parseAttackLines();
                 const triggeredAttacks = [...parsedAttacks.attacks, ...parsedAttacks.triggeredAttacks];
@@ -723,7 +748,7 @@ export class Parser13AMonster {
                 return;
             }
 
-            const traitParser = new Parser13AMonster.Namespace.BlockParser(text);
+            const traitParser = new Parser13AMonster.Namespace.PdfBlockParser(text);
             const updatedTraits = this.#updateQuickAddField("nastierTraits", traitParser.parseTraitBlock());
 
             return Parser13AMonster.Namespace.BlockWriter.writeNastierTraitsBlock(updatedTraits);
@@ -732,12 +757,26 @@ export class Parser13AMonster {
         async getMonsterDefenses() {
             const defenses = await this.#quickAddContext.quickAddApi.wideInputPrompt("Monster Defenses?");
 
-            const defenseParser = new Parser13AMonster.Namespace.BlockParser(defenses);
+            const defenseParser = new Parser13AMonster.Namespace.PdfBlockParser(defenses);
 
             const monsterDefenses = defenseParser.parseDefenseBlock();
             this.#quickAddContext.variables = Object.assign(this.#quickAddContext.variables, monsterDefenses);
 
             return Parser13AMonster.Namespace.BlockWriter.writeDefenseBlock(monsterDefenses);
+        }
+
+        async getSrdStatblockFromRawText() {
+            const srdText = await this.#quickAddContext.quickAddApi.wideInputPrompt(
+                "Manually copy the text from the online SRD (from Name to HP) and paste here",
+            );
+
+            const srdParser = new Parser13AMonster.Namespace.SrdBlockParser(srdText);
+
+            const monsterDescription = srdParser.getMonsterDescription();
+            this.#quickAddContext.variables = Object.assign(this.#quickAddContext.variables, monsterDescription);
+            const statblock = srdParser.getFullMonster();
+
+            return Parser13AMonster.Namespace.BlockWriter.writeFullMonster(statblock);
         }
 
         async promptMinimalistParser() {
@@ -1050,6 +1089,10 @@ export class Parser13AMonster {
             return /^ (?<follow_up>.*)/;
         }
 
+        static get pdfFollowUpRegex() {
+            return /^([^:—]+|[^A-Z].+)$/m;
+        }
+
         static get nastierHeaderRegex() {
             return /^Nastier Specials?$/i;
         }
@@ -1077,8 +1120,8 @@ export class Parser13AMonster {
                 md: /^MD/i,
                 hp: /^HP/i,
                 anyDefense: /^(AC|PD|MD|HP)/i,
-                anyDefenseOneLine: /^(?<name>AC|PD|MD|HP) (?<value>\d+)$/i,
-                allDefensesOneLine: /^AC +(?<ac>\d+) +PD +(?<pd>\d+) +MD +(?<md>\d+) +HP +(?<hp>\d+)/i,
+                anyDefenseOneLine: /^(?<name>AC|PD|MD|HP) (?<value>\d+)( \(mook\))?$/i,
+                allDefensesOneLine: /^AC +(?<ac>\d+) +PD +(?<pd>\d+) +MD +(?<md>\d+) +HP +(?<hp>\d+)( \(mook\))?/i,
                 other: /^\((?<name>.+)\)+/,
                 value: /^(?<value>\d+)/,
             };
@@ -1261,7 +1304,7 @@ export class Parser13AMonster {
             let currentLine;
             while (
                 ((currentLine = this.#textHandler.currentLine),
-                !currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator))
+                    !currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator))
             ) {
                 if (currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator)) {
                     break;
