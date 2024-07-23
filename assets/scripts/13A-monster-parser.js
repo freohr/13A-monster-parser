@@ -203,10 +203,7 @@ export class Parser13AMonster {
                     )) !== null
                 ) {
                     this.#textHandler.advanceIndex();
-                    const newAttack = this.#getBasicAttack(
-                        match.groups.attack_name,
-                        match.groups.attack_desc,
-                    );
+                    const newAttack = this.#getBasicAttack(match.groups.base_name, match.groups.attack_desc);
 
                     triggeredAttacks.push(newAttack);
                 } else {
@@ -217,6 +214,33 @@ export class Parser13AMonster {
             return { traits: traits, triggeredAttacks: triggeredAttacks };
         }
 
+        #getAttackTraits() {
+            const traits = [];
+
+            let match;
+
+            while (!this.#textHandler.atEnd) {
+                if (
+                    (match = this.#textHandler.currentLine.match(
+                        Parser13AMonster.Namespace.ParsingRegexes.traitStarterRegex,
+                    )) !== null
+                ) {
+                    this.#textHandler.advanceIndex();
+
+                    traits.push(
+                        new Parser13AMonster.Namespace.Trait(
+                            match.groups.trait_name,
+                            this.#getDescription(match.groups.trait_desc),
+                        ),
+                    );
+                } else {
+                    break;
+                }
+            }
+
+            return traits;
+        }
+
         #getBasicAttack(attackName, attackDesc) {
             return new Parser13AMonster.Namespace.Attack(attackName, this.#getDescription(attackDesc), null);
         }
@@ -225,7 +249,7 @@ export class Parser13AMonster {
             return new Parser13AMonster.Namespace.Attack(
                 attackName,
                 this.#getDescription(attackDesc),
-                this.#getTraits(),
+                this.#getAttackTraits(),
             );
         }
 
@@ -242,16 +266,29 @@ export class Parser13AMonster {
                     ))
                 ) {
                     this.#textHandler.advanceIndex();
+
+                    let isTriggered = false;
+
+                    if (
+                        startAttackMatch.groups.special?.match(
+                            Parser13AMonster.Namespace.ParsingRegexes.triggeredAttackRegex,
+                        )
+                    ) {
+                        isTriggered = true;
+                    }
+
                     const newAttack = this.#getFullAttack(
-                        startAttackMatch.groups.attack_name,
+                        isTriggered ? startAttackMatch.groups.base_name : startAttackMatch.groups.full_name,
                         startAttackMatch.groups.attack_desc,
                     );
 
-                    if (startAttackMatch.groups.trigger) {
+                    if (isTriggered) {
                         triggeredAttacks.push(newAttack);
                     } else {
                         attacks.push(newAttack);
                     }
+                } else {
+                    break;
                 }
             }
 
@@ -329,7 +366,7 @@ export class Parser13AMonster {
         }
 
         parseTraitBlock() {
-            if (this.#textHandler.currentLine.startsWith("Nastier Specials")) {
+            if (this.#textHandler.currentLine.startsWith("Nastier Special")) {
                 this.#textHandler.advanceIndex();
             }
             return this.#getTraits();
@@ -359,7 +396,7 @@ export class Parser13AMonster {
             while (
                 !this.#textHandler.atEnd &&
                 this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.strengthLineRegex) ===
-                null
+                    null
             ) {
                 flavorText.push(this.#textHandler.currentLine);
                 this.#textHandler.advanceIndex();
@@ -1066,11 +1103,11 @@ export class Parser13AMonster {
         }
 
         static get attackStarterRegex() {
-            return /^(?<trigger>\[Special Trigger] )?(?<attack_name>(\[.+] )?([CR]: )?[^:]*?)(—| [\-–] )(?<attack_desc>.*)$/i;
+            return /^(?<full_name>(\[(?<special>.*)] ?)?(?<base_name>([CR]:)?[^:]+)) ?— ?(?<attack_desc>.*)/i;
         }
 
-        static get simpleAttackStarterRegex() {
-            return /^(?<attack_name>(\[.+] )?([CR]: )?[^:]*?)(—| [\-–] )(?<attack_desc>.*)$/i;
+        static get triggeredAttackRegex() {
+            return /^special trigger$/i;
         }
 
         static get attackTraitStarterRegex() {
@@ -1078,7 +1115,7 @@ export class Parser13AMonster {
         }
 
         static get standardAttackTraitNames() {
-            return /^(Limited Use|.*Natural (\d+|odd|even)|.*Hit|.*Miss|.*target.*|.*failed save.*|.*per battle.*|Criti?c?a?l?|Quick Use)/i;
+            return /^(Limited Use|.*Natural (\d+(-\d+)?|odd|even)|.*Hit|.*Miss|.*target.*|.*failed save.*|.*per battle.*|Criti?c?a?l?|Quick Use)/i;
         }
 
         static get traitStarterRegex() {
@@ -1090,7 +1127,7 @@ export class Parser13AMonster {
         }
 
         static get pdfFollowUpRegex() {
-            return /^([^:—]+|[^A-Z].+)$/m;
+            return /^([^:—]+|[^A-Z].+(action|attack|enemy|\d|battle|effect|roll|move):)$/m;
         }
 
         static get nastierHeaderRegex() {
@@ -1255,8 +1292,14 @@ export class Parser13AMonster {
                     Parser13AMonster.Namespace.ParsingRegexes.attackStarterRegex,
                 ))
             ) {
+                let isTriggered = false;
+
+                if (attackMatch.groups.special?.match(Parser13AMonster.Namespace.ParsingRegexes.triggeredAttackRegex)) {
+                    isTriggered = true;
+                }
+
                 const currentAttack = new Parser13AMonster.Namespace.Attack(
-                    attackMatch.groups.attack_name,
+                    isTriggered ? attackMatch.groups.base_name : attackMatch.groups.full_name,
                     attackMatch.groups.attack_desc,
                 );
                 this.#textHandler.advanceIndex();
@@ -1304,7 +1347,7 @@ export class Parser13AMonster {
             let currentLine;
             while (
                 ((currentLine = this.#textHandler.currentLine),
-                    !currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator))
+                !currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator))
             ) {
                 if (currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator)) {
                     break;
@@ -1330,7 +1373,7 @@ export class Parser13AMonster {
                     (currentMatch = currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.attackStarterRegex))
                 ) {
                     lastModifiedItem = new Parser13AMonster.Namespace.Attack(
-                        currentMatch.groups.attack_name,
+                        currentMatch.groups.base_name,
                         currentMatch.groups.attack_desc,
                     );
                     triggeredAttacks.push(lastModifiedItem);
@@ -1558,12 +1601,12 @@ export class Parser13AMonster {
          * @param attackText {string}
          * @return {Parser13AMonster.Namespace.Attack}
          */
-        static #parseAttackLine(attackText) {
+        static #parseAttackLine(attackText, isTriggered) {
             const attackBlock = attackText.split(" ").filter((s) => !Parser13AMonster.Namespace.Helpers.isEmpty(s));
             const attackMatch = attackBlock[0].match(Parser13AMonster.Namespace.ParsingRegexes.attackStarterRegex);
 
             const attack = new Parser13AMonster.Namespace.Attack(
-                attackMatch.groups.attack_name,
+                isTriggered ? attackMatch.groups.base_name : attackMatch.groups.full_name,
                 attackMatch.groups.attack_desc,
             );
 
@@ -1674,8 +1717,16 @@ export class Parser13AMonster {
                     let currentLineMatch;
                     if ((currentLineMatch = line.match(Parser13AMonster.Namespace.ParsingRegexes.attackStarterRegex))) {
                         // check for trigger header
-                        const isTriggered = currentLineMatch.groups.trigger !== undefined;
-                        const attack = SrdHtmlParser.#parseAttackLine(line);
+
+                        let isTriggered = false;
+
+                        if ((special = currentLineMatch.groups.special)) {
+                            if (special.match(Parser13AMonster.Namespace.ParsingRegexes.triggeredAttackRegex)) {
+                                isTriggered = true;
+                            }
+                        }
+
+                        const attack = SrdHtmlParser.#parseAttackLine(line, isTriggered);
 
                         if (isTriggered) {
                             triggeredAttackCategory.attacks.push(attack);
