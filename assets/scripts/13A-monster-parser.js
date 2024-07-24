@@ -167,14 +167,21 @@ export class Parser13AMonster {
             const fullDesc = [descStarter];
             let desc;
 
-            while (
-                !this.#textHandler.atEnd &&
-                (desc = this.#textHandler.currentLine.match(
-                    Parser13AMonster.Namespace.ParsingRegexes.pdfFollowUpRegex,
-                )) !== null
-            ) {
-                fullDesc.push(this.#textHandler.currentLine);
-                this.#textHandler.advanceIndex();
+            while (!this.#textHandler.atEnd) {
+                if (this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.nastierHeaderRegex)) {
+                    break;
+                }
+
+                if (
+                    (desc = this.#textHandler.currentLine.match(
+                        Parser13AMonster.Namespace.ParsingRegexes.pdfFollowUpRegex,
+                    )) !== null
+                ) {
+                    fullDesc.push(this.#textHandler.currentLine);
+                    this.#textHandler.advanceIndex();
+                } else {
+                    break;
+                }
             }
 
             return fullDesc.join(" ");
@@ -372,7 +379,18 @@ export class Parser13AMonster {
                 return this.parseNastierTraitBlock();
             }
 
-            return this.#getTraits();
+            const parsedTraits = this.#getTraits();
+            if (!this.#textHandler.atEnd && this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.nastierHeaderRegex)) {
+                const parsedNastierTraits = this.parseNastierTraitBlock();
+
+                parsedTraits.triggeredAttacks = [
+                    ...parsedTraits.triggeredAttacks,
+                    ...parsedNastierTraits.triggeredAttacks,
+                ];
+                parsedTraits.nastierTraits = parsedNastierTraits.nastierTraits;
+            }
+
+            return parsedTraits;
         }
 
         parseNastierTraitBlock() {
