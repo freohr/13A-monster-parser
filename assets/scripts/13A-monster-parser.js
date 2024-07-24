@@ -380,7 +380,10 @@ export class Parser13AMonster {
             }
 
             const parsedTraits = this.#getTraits();
-            if (!this.#textHandler.atEnd && this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.nastierHeaderRegex)) {
+            if (
+                !this.#textHandler.atEnd &&
+                this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.nastierHeaderRegex)
+            ) {
                 const parsedNastierTraits = this.parseNastierTraitBlock();
 
                 parsedTraits.triggeredAttacks = [
