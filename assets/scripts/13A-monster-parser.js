@@ -1155,7 +1155,7 @@ export class Parser13AMonster {
         }
 
         static get pdfFollowUpRegex() {
-            return /^([^:—]+|[^A-Z].+(action|attack|enemy|\d|battle|effect|roll|move):)$/m;
+            return /^([^:—]+|[^A-Z].+(action|attack|enemy|\d|battle|effect|roll|move):|[^A-Z\[].+—.*)$/m;
         }
 
         static get nastierHeaderRegex() {
