@@ -107,7 +107,18 @@ Here's a picture showing which part of the monster's statblock is which block:
 1. Open the [script file](./assets/scripts/13A-monster-parser.js)
 2. In your 13th Age world, Create a new macro, select `Global` for Scope and `Script` for type
 3. Dump the entire script content into the macro field
-4. Call the macro when you want to import a new monster, and follow the instructions in [Parsing a Monster > From a PDF](#from-a-pdf-1st-or-3rd-party)
+4. Add the following snippet at then end:
+
+```js
+if (game !== undefined) {
+    const parser = new Parser13AMonster.Namespace.FoundryParser();
+    const monster = await parser.getFullMonster();
+    console.log(monster);
+    parser.createMonsterSheet(monster);
+}
+```
+
+5. Call the macro when you want to import a new monster, and follow the instructions in [Parsing a Monster > From a PDF](#from-a-pdf-1st-or-3rd-party)
 
 ## ToDo
 

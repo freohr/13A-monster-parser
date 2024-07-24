@@ -4,7 +4,7 @@ export class Parser13AMonster {
         static stringToPascalCase(string) {
             const allWords = string.split(" ");
             const capitalizedWords = allWords.map((s) =>
-                s.replace(/(\w)(\w*)/g, (g0, g1, g2) => g1.toUpperCase() + g2.toLowerCase()),
+                s.replace(/(\w)(\w*)/g, (_, g1, g2) => g1.toUpperCase() + g2.toLowerCase()),
             );
 
             return capitalizedWords.join(" ");
@@ -23,7 +23,9 @@ export class Parser13AMonster {
         }
 
         static getOrdinal(number) {
-            const localNumber = parseInt(number);
+            if (!(number instanceof Number)) {
+                number = parseInt(number);
+            }
 
             if (number === 0 || (number >= 4 && number <= 30)) {
                 return `${number}th`;
@@ -366,10 +368,20 @@ export class Parser13AMonster {
         }
 
         parseTraitBlock() {
-            if (this.#textHandler.currentLine.startsWith("Nastier Special")) {
+            if (this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.nastierHeaderRegex)) {
+                return this.parseNastierTraitBlock();
+            }
+
+            return this.#getTraits();
+        }
+
+        parseNastierTraitBlock() {
+            if (this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.nastierHeaderRegex)) {
                 this.#textHandler.advanceIndex();
             }
-            return this.#getTraits();
+
+            const { traits, ...other } = this.#getTraits();
+            return { nastierTraits: traits, ...other };
         }
 
         parseDescriptionBlock() {
@@ -396,7 +408,7 @@ export class Parser13AMonster {
             while (
                 !this.#textHandler.atEnd &&
                 this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.strengthLineRegex) ===
-                    null
+                null
             ) {
                 flavorText.push(this.#textHandler.currentLine);
                 this.#textHandler.advanceIndex();
@@ -413,7 +425,7 @@ export class Parser13AMonster {
                 monsterDescription.size = strengthMatch.groups.strength?.toLowerCase().replace(/ /, "-");
                 monsterDescription.level = strengthMatch.groups.level ?? strengthMatch.groups.levelAfter;
                 monsterDescription.levelOrdinal =
-                    strengthMatch.groups.ordinal ??
+                    strengthMatch.groups.ordinal?.replace(/ /, "") ??
                     Parser13AMonster.Namespace.Helpers.getOrdinal(monsterDescription.level);
                 monsterDescription.type = strengthMatch.groups.type.toLowerCase();
 
@@ -673,9 +685,7 @@ export class Parser13AMonster {
         #updateQuickAddField(fieldName, fieldContent) {
             // Since we're either creating or updating a field that contains an array in the global QuickAdd object, we can just
             // put everything into an array, flatten it, then filter out the possibility that there wasn't anything in the field yet
-            const updatedContent = [this.#getQuickAddField(fieldName), fieldContent]
-                .flat()
-                .filter((field) => field);
+            const updatedContent = [this.#getQuickAddField(fieldName), fieldContent].flat().filter((field) => field);
             this.#quickAddContext.variables[fieldName] = updatedContent;
 
             return updatedContent;
@@ -729,8 +739,8 @@ export class Parser13AMonster {
                 "Monster Attacks (including [Special Trigger])?",
             );
 
-            const attackParser = new Parser13AMonster.Namespace.BlockParser(attackText);
-            const parsedAttacks = attackParser.parseAttackLines();
+            const attackParser = new Parser13AMonster.Namespace.PdfBlockParser(attackText);
+            const parsedAttacks = attackParser.parseAttackBlock();
 
             const updatedAttacks = this.#updateQuickAddField("actions", parsedAttacks.attacks);
 
@@ -747,7 +757,7 @@ export class Parser13AMonster {
                 return;
             }
 
-            const traitParser = new Parser13AMonster.Namespace.BlockParser(text);
+            const traitParser = new Parser13AMonster.Namespace.PdfBlockParser(text);
             const traits = traitParser.parseTraitBlock();
 
             const updatedTraits = this.#updateQuickAddField("traits", traits.traits);
@@ -766,7 +776,7 @@ export class Parser13AMonster {
             if (text) {
                 const attackParser = new Parser13AMonster.Namespace.PdfBlockParser(text);
 
-                const parsedAttacks = attackParser.parseAttackLines();
+                const parsedAttacks = attackParser.parseAttackBlock();
                 const triggeredAttacks = [...parsedAttacks.attacks, ...parsedAttacks.triggeredAttacks];
                 updatedTriggeredActions = this.#updateQuickAddField("triggerActions", triggeredAttacks);
             } else {
@@ -1347,7 +1357,7 @@ export class Parser13AMonster {
             let currentLine;
             while (
                 ((currentLine = this.#textHandler.currentLine),
-                !currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator))
+                    !currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator))
             ) {
                 if (currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator)) {
                     break;
@@ -2083,31 +2093,31 @@ export class Parser13AMonster {
         }
 
         #getMonsterDescription(descText) {
-            const parser = new Parser13AMonster.Namespace.BlockParser(descText);
+            const parser = new Parser13AMonster.Namespace.PdfBlockParser(descText);
 
             return parser.parseDescriptionBlock();
         }
 
         #getMonsterAttacks(attackText) {
-            const parser = new Parser13AMonster.Namespace.BlockParser(attackText);
+            const parser = new Parser13AMonster.Namespace.PdfBlockParser(attackText);
 
-            return parser.parseAttackLines();
+            return parser.parseAttackBlock();
         }
 
         #getMonsterTraits(traitText) {
-            const parser = new Parser13AMonster.Namespace.BlockParser(traitText);
+            const parser = new Parser13AMonster.Namespace.PdfBlockParser(traitText);
 
             return parser.parseTraitBlock();
         }
 
         #getMonsterNastierTraits(nastierText) {
-            const parser = new Parser13AMonster.Namespace.BlockParser(nastierText);
+            const parser = new Parser13AMonster.Namespace.PdfBlockParser(nastierText);
 
             return parser.parseTraitBlock();
         }
 
         #getMonsterDefenses(defenseText) {
-            const parser = new Parser13AMonster.Namespace.BlockParser(defenseText);
+            const parser = new Parser13AMonster.Namespace.PdfBlockParser(defenseText);
 
             return parser.parseDefenseBlock();
         }
@@ -2161,7 +2171,7 @@ export class Parser13AMonster {
                         },
                     },
                     default: "yes",
-                    close: (html) => {
+                    close: (_) => {
                         reject();
                     },
                 }).render(true);
@@ -2176,11 +2186,4 @@ export class Parser13AMonster {
             return value;
         }
     };
-}
-
-if (game) {
-    const parser = new Parser13AMonster.Namespace.FoundryParser();
-const monster = await parser.getFullMonster();
-console.log(monster)
-parser.createMonsterSheet(monster);
 }
