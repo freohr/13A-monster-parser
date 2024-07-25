@@ -429,7 +429,7 @@ export class Parser13AMonster {
             while (
                 !this.#textHandler.atEnd &&
                 this.#textHandler.currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.strengthLineRegex) ===
-                null
+                    null
             ) {
                 flavorText.push(this.#textHandler.currentLine);
                 this.#textHandler.advanceIndex();
@@ -521,7 +521,7 @@ export class Parser13AMonster {
         }
     };
 
-    BlockWriter = class BlockWriter {
+    ObsidianBlockWriter = class BlockWriter {
         static #addIndentation(string) {
             return `      ${string}`;
         }
@@ -667,7 +667,7 @@ export class Parser13AMonster {
         }
 
         /**
-         *
+         * Write the full statblock without the needed FantasyStatblock headers
          * @param fullStatblock: FullStatBlock
          * @returns {string}
          */
@@ -689,6 +689,172 @@ export class Parser13AMonster {
             );
 
             return stringBlocks.filter((s) => s).join("\n");
+        }
+
+        /**
+         * Write the full statblock including the surrounding header needed for the FantasyStatblock module
+         * @param fullStatblock: FullStatBlock
+         * @returns {string}
+         */
+        static writeFullStatblock(fullStatblock) {
+            const output = [
+                "```statblock",
+                "layout: Basic 13th Age Monster Layout",
+                "columns: 1",
+                Parser13AMonster.Namespace.ObsidianBlockWriter.writeFullMonster(fullStatblock),
+                "```",
+            ];
+
+            return output.join("\n");
+        }
+    };
+
+    LaTeXBlockWriter = class LaTeXBlockWriter {
+        /**
+         * Write the full statblock without the standard LaTeX document boilerplate
+         * @param fullStatblock: FullStatBlock
+         * @returns {string}
+         */
+        static writeMonsterCard(monsterData) {
+            if (!monsterData) return;
+
+            const monsterBlock = [
+                "\\monsterCard{",
+                this.#writeDescription(monsterData.fullDescription),
+                this.#writeAttackBlock(monsterData.attacks),
+                this.#writeTraitBlock(monsterData.traits),
+                this.#writeTriggeredAttackBlock(monsterData.triggeredAttacks),
+                this.#writeNastierTraitBlock(monsterData.nastierTraits),
+                this.#writeDefenses(monsterData),
+                "}",
+            ];
+
+            return monsterBlock.filter((s) => s).join("\n");
+        }
+
+        /**
+         * Write the full statblock including the surrounding boilerplate needed for the LaTeX document
+         * @param fullStatblock: FullStatBlock
+         * @returns {string}
+         */
+        static #writeFullDocument(monsterData) {
+            return ```\\documentclass{13a-monster-card}
+\\begin{document}
+${this.writeMonsterCard(monsterData)}
+\\end{document}
+```;
+        }
+
+        /**
+         * @param fullStatblock: FullStatBlock
+         * @returns {string}
+         */
+        static #writeDescription(monsterData) {
+            if (!monsterData?.level) return;
+
+            const typeLine = [
+                `\\monsterName{${monsterData.name}}`,
+                `\\monsterType{${monsterData.level}}{${monsterData.role}}{${monsterData.type}}[${monsterData.size ?? ""}][${monsterData.strength ?? ""}][${monsterData.mook ?? ""}]`,
+                `\\initiative{${monsterData.initiative}}`,
+            ];
+
+            if (monsterData.vulnerability) {
+                typeLine.push(`\\vulnerabilities{${monsterData.vulnerability}}`);
+            }
+
+            return typeLine.join("\n");
+        }
+
+        /**
+         * @param fullStatblock: FullStatBlock
+         * @returns {string}
+         */
+        static #writeDefenses(monsterData) {
+            if (!monsterData?.ac) return;
+
+            return `\\monsterDefenses{${monsterData.ac}}{${monsterData.pd}}{${monsterData.md}}{${monsterData.hp}}`;
+        }
+
+        /**
+         * @param trait: Parser13AMonster.Namespace.Trait
+         * @returns {string}
+         */
+        static #writeTrait(trait) {
+            return `\\trait{${trait.name}}{${trait.description}}`;
+        }
+
+        static #writeTraitBlock(traits) {
+            if (Parser13AMonster.Namespace.Helpers.isEmpty(traits)) return;
+
+            const block = ["\\traits{"];
+
+            for (const trait of traits) {
+                block.push(this.#writeTrait(trait));
+            }
+
+            block.push("}");
+
+            return block.join("\n");
+        }
+
+        static #writeNastierTraitBlock(traits) {
+            if (Parser13AMonster.Namespace.Helpers.isEmpty(traits)) return;
+
+            const block = ["\\nastierTraits{"];
+
+            for (const trait of traits) {
+                block.push(this.#writeTrait(trait));
+            }
+
+            block.push("}");
+
+            return block.join("\n");
+        }
+
+        /**
+         * @param {Parser13AMonster.Namespace.Attack} attack
+         *
+         */
+        static #writeAttack(attack) {
+            const attackString = [`\\action{${attack.name}}{${attack.description}}`];
+
+            if (!Parser13AMonster.Namespace.Helpers.isEmpty(attack.traits)) {
+                attackString[0] += "[";
+                for (let trait of attack.traits) {
+                    attackString.push(this.#writeTrait(trait));
+                }
+                attackString.push("]");
+            }
+
+            return attackString.join("\n");
+        }
+
+        static #writeAttackBlock(attacks) {
+            if (Parser13AMonster.Namespace.Helpers.isEmpty(attacks)) return;
+
+            const block = ["\\actions{"];
+
+            for (const attack of attacks) {
+                block.push(this.#writeAttack(attack));
+            }
+
+            block.push("}");
+
+            return block.join("\n");
+        }
+
+        static #writeTriggeredAttackBlock(attacks) {
+            if (Parser13AMonster.Namespace.Helpers.isEmpty(attacks)) return;
+
+            const block = ["\\triggeredActions{"];
+
+            for (const attack of attacks) {
+                block.push(this.#writeAttack(attack));
+            }
+
+            block.push("}");
+
+            return block.join("\n");
         }
     };
 
@@ -752,7 +918,7 @@ export class Parser13AMonster {
             const monsterDescription = descParser.parseDescriptionBlock();
             this.#quickAddContext.variables = Object.assign(this.#quickAddContext.variables, monsterDescription);
 
-            return Parser13AMonster.Namespace.BlockWriter.writeDescriptionBlock(monsterDescription);
+            return Parser13AMonster.Namespace.ObsidianBlockWriter.writeDescriptionBlock(monsterDescription);
         }
 
         async getMonsterActions() {
@@ -768,7 +934,7 @@ export class Parser13AMonster {
             this.#updateQuickAddField("triggered_actions", parsedAttacks.triggeredAttacks);
 
             // We don't return the parsed triggered attacks right now, but we store them for later
-            return Parser13AMonster.Namespace.BlockWriter.writeStandardAttacksBlock(updatedAttacks);
+            return Parser13AMonster.Namespace.ObsidianBlockWriter.writeStandardAttacksBlock(updatedAttacks);
         }
 
         async getMonsterTraits() {
@@ -786,7 +952,7 @@ export class Parser13AMonster {
             // We don't return the parsed triggered attacks right now, but we store them for later
             this.#updateQuickAddField("triggered_actions", traits.triggeredActions);
 
-            return Parser13AMonster.Namespace.BlockWriter.writeStandardTraitsBlock(updatedTraits);
+            return Parser13AMonster.Namespace.ObsidianBlockWriter.writeStandardTraitsBlock(updatedTraits);
         }
 
         async getMonsterTriggeredActions() {
@@ -804,7 +970,7 @@ export class Parser13AMonster {
                 updatedTriggeredActions = this.#getQuickAddField("triggerActions");
             }
 
-            return Parser13AMonster.Namespace.BlockWriter.writeTriggeredAttacksBlock(updatedTriggeredActions);
+            return Parser13AMonster.Namespace.ObsidianBlockWriter.writeTriggeredAttacksBlock(updatedTriggeredActions);
         }
 
         async getMonsterNastierTraits() {
@@ -819,7 +985,7 @@ export class Parser13AMonster {
             const traitParser = new Parser13AMonster.Namespace.PdfBlockParser(text);
             const updatedTraits = this.#updateQuickAddField("nastierTraits", traitParser.parseTraitBlock());
 
-            return Parser13AMonster.Namespace.BlockWriter.writeNastierTraitsBlock(updatedTraits);
+            return Parser13AMonster.Namespace.ObsidianBlockWriter.writeNastierTraitsBlock(updatedTraits);
         }
 
         async getMonsterDefenses() {
@@ -830,7 +996,7 @@ export class Parser13AMonster {
             const monsterDefenses = defenseParser.parseDefenseBlock();
             this.#quickAddContext.variables = Object.assign(this.#quickAddContext.variables, monsterDefenses);
 
-            return Parser13AMonster.Namespace.BlockWriter.writeDefenseBlock(monsterDefenses);
+            return Parser13AMonster.Namespace.ObsidianBlockWriter.writeDefenseBlock(monsterDefenses);
         }
 
         async getSrdStatblockFromRawText() {
@@ -844,7 +1010,7 @@ export class Parser13AMonster {
             this.#quickAddContext.variables = Object.assign(this.#quickAddContext.variables, monsterDescription);
             const statblock = srdParser.getFullMonster();
 
-            return Parser13AMonster.Namespace.BlockWriter.writeFullMonster(statblock);
+            return Parser13AMonster.Namespace.ObsidianBlockWriter.writeFullMonster(statblock);
         }
 
         async promptMinimalistParser() {
@@ -885,7 +1051,7 @@ export class Parser13AMonster {
             const statblock = srdParser.getFullMonster(monsterName);
             this.#quickAddContext.variables = Object.assign(this.#quickAddContext.variables, statblock.fullDescription);
 
-            return Parser13AMonster.Namespace.BlockWriter.writeFullMonster(statblock);
+            return Parser13AMonster.Namespace.ObsidianBlockWriter.writeFullMonster(statblock);
         }
     };
 
@@ -922,7 +1088,7 @@ export class Parser13AMonster {
 
             const statblock = srdParser.getFullMonster(monsterName);
 
-            return Parser13AMonster.Namespace.BlockWriter.writeFullMonster(statblock);
+            return Parser13AMonster.Namespace.ObsidianBlockWriter.writeFullMonster(statblock);
         }
     };
 
@@ -1378,7 +1544,7 @@ export class Parser13AMonster {
             let currentLine;
             while (
                 ((currentLine = this.#textHandler.currentLine),
-                    !currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator))
+                !currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator))
             ) {
                 if (currentLine.match(Parser13AMonster.Namespace.ParsingRegexes.blockSeparator)) {
                     break;
