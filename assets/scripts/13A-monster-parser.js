@@ -1,5 +1,5 @@
 export class Parser13AMonster {
-    static Namespace = new Parser13AMonster();
+  static Namespace = new Parser13AMonster();
     Helpers = class Helpers {
         static stringToPascalCase(string) {
             const allWords = string.split(" ");
@@ -2048,7 +2048,7 @@ ${this.writeMonsterCard(monsterData)}
     };
 
     FoundryParser = class FoundryParser {
-        createAttribute(type, label, value) {
+        static #createAttribute(type, label, value) {
             return {
                 type: type,
                 label: label,
@@ -2056,7 +2056,7 @@ ${this.writeMonsterCard(monsterData)}
             };
         }
 
-        replaceRollableParts(text) {
+        static #replaceRollableParts(text) {
             const helpers = Parser13AMonster.Namespace.Helpers;
             const regexes = Parser13AMonster.Namespace.ParsingRegexes;
 
@@ -2069,7 +2069,7 @@ ${this.writeMonsterCard(monsterData)}
          * @param {Attack} attack
          * @param {boolean} [isTriggered=false]
          */
-        transformAttack(attack, isTriggered = false) {
+        static #transformAttack(attack, isTriggered = false) {
             const actionParts = attack.name.match(Parser13AMonster.Namespace.ParsingRegexes.splitAttackRoll);
             const attackName = isTriggered ? `[Special Trigger] ${actionParts.groups.name}` : actionParts.groups.name;
 
@@ -2078,13 +2078,13 @@ ${this.writeMonsterCard(monsterData)}
                 type: "action",
                 img: "",
                 system: {
-                    name: this.createAttribute("String", "Name", attackName),
-                    attack: this.createAttribute(
+                    name: this.#createAttribute("String", "Name", attackName),
+                    attack: this.#createAttribute(
                         "String",
                         "Attack Roll",
-                        `[[d20${actionParts.groups.bonus}]] ${this.replaceRollableParts(actionParts.groups.desc)}`,
+                        `[[d20${actionParts.groups.bonus}]] ${this.#replaceRollableParts(actionParts.groups.desc)}`,
                     ),
-                    hit: this.createAttribute("String", "Hit", this.replaceRollableParts(attack.description)),
+                    hit: this.#createAttribute("String", "Hit", this.#replaceRollableParts(attack.description)),
                 },
             };
 
@@ -2108,7 +2108,7 @@ ${this.writeMonsterCard(monsterData)}
 
                 attackData.system[traitType] = {
                     name: traitName,
-                    ...this.createAttribute("String", traitLabel, this.replaceRollableParts(trait.description)),
+                    ...this.#createAttribute("String", traitLabel, this.#replaceRollableParts(trait.description)),
                 };
             }
 
@@ -2119,7 +2119,7 @@ ${this.writeMonsterCard(monsterData)}
          * @param {Trait} trait
          * @param {boolean} [isNastier=false]
          */
-        transformTrait(trait, isNastier = false) {
+        static #transformTrait(trait, isNastier = false) {
             const traitType = isNastier ? "nastierSpecial" : "trait";
 
             const traitData = {
@@ -2127,11 +2127,11 @@ ${this.writeMonsterCard(monsterData)}
                 type: traitType,
                 img: "",
                 system: {
-                    name: this.createAttribute("String", "Name", trait.name),
-                    description: this.createAttribute(
+                    name: this.#createAttribute("String", "Name", trait.name),
+                    description: this.#createAttribute(
                         "String",
                         "Description",
-                        this.replaceRollableParts(trait.description),
+                        this.#replaceRollableParts(trait.description),
                     ),
                 },
             };
@@ -2139,21 +2139,45 @@ ${this.writeMonsterCard(monsterData)}
             return traitData;
         }
 
-        async createFoundryActor(actorData, actorItemData) {
+        static async #createFoundryActor(actorData, actorItemData) {
             const actor = await Actor.create(actorData);
             await actor.createEmbeddedDocuments("Item", actorItemData);
             return actor;
         }
 
+        static async createMonsterSheet() {
+            const monsterData = await this.#getFullMonsterData();
+
+            const baseData = this.createFoundryBaseActorData(monsterData);
+            const itemData = this.createFoundryActorItemsData(monsterData);
+
+            return this.#createFoundryActor(baseData, itemData);
+        }
+
         /**
          * @param {Parser13AMonster.Namespace.FullStatBlock} monsterData
          */
-        createFoundryMonsterItemsData(monsterData) {
-            const actionData = monsterData.attacks
-                .map((attack) => this.transformAttack(attack, false))
-                .concat(monsterData.triggeredAttacks.map((attack) => this.transformAttack(attack, true)))
-                .concat(monsterData.traits.map((trait) => this.transformTrait(trait, false)))
-                .concat(monsterData.nastierTraits.map((trait) => this.transformTrait(trait, true)));
+        static createFoundryActorItemsData(monsterData) {
+            let actionData = [];
+
+            if (!Parser13AMonster.Namespace.Helpers.isEmpty(monsterData.attacks)) {
+                actionData = [...actionData, ...monsterData.attacks.map((a) => this.#transformAttack(a, false))];
+            }
+
+            if (!Parser13AMonster.Namespace.Helpers.isEmpty(monsterData.triggeredAttacks)) {
+                actionData = [
+                    ...actionData,
+                    ...monsterData.triggeredAttacks.map((a) => this.#transformAttack(a, true)),
+                ];
+            }
+
+            if (!Parser13AMonster.Namespace.Helpers.isEmpty(monsterData.traits)) {
+                actionData = [...actionData, ...monsterData.traits.map((a) => this.#transformTrait(a, false))];
+            }
+
+            if (!Parser13AMonster.Namespace.Helpers.isEmpty(monsterData.nastierTraits)) {
+                actionData = [...actionData, ...monsterData.nastierTraits.map((a) => this.#transformTrait(a, true))];
+            }
 
             return actionData;
         }
@@ -2161,69 +2185,78 @@ ${this.writeMonsterCard(monsterData)}
         /**
          * @param {Parser13AMonster.Namespace.FullStatBlock} monsterData
          */
-        createFoundryMonsterData(monsterData) {
+        static createFoundryBaseActorData(monsterData) {
             const baseAttrObject = {
                 base: 10,
                 min: 0,
             };
 
-            let actorData = {};
+            const actorData = {};
 
-            actorData.name = monsterData.name;
+            const monsterDescData = monsterData.fullDescription;
+
+            actorData.name = monsterDescData?.name ?? "";
             actorData.type = "npc";
 
             let actorAttributes = {};
-            actorAttributes.ac = {
-                ...this.createAttribute("Number", "Armor Class", monsterData.ac),
-                ...baseAttrObject,
-            };
-            actorAttributes.pd = {
-                ...this.createAttribute("Number", "Physical Defense", monsterData.pd),
-                ...baseAttrObject,
-            };
-            actorAttributes.md = {
-                ...this.createAttribute("Number", "Mental Defense", monsterData.md),
-                ...baseAttrObject,
-            };
-            actorAttributes.hp = {
-                ...this.createAttribute("Number", "Hit Points", monsterData.hp),
-                ...baseAttrObject,
-                max: parseInt(monsterData.hp),
-                temp: 0,
-                tempmax: 0,
-                automatic: true,
-            };
-            actorAttributes.init = {
-                ...this.createAttribute("Number", "Initiative Modifier", monsterData.initiative),
-                ...baseAttrObject,
-            };
-            actorAttributes.level = {
-                ...this.createAttribute("Number", "Level", monsterData.level),
-                ...baseAttrObject,
-            };
+
+            if (monsterData.ac) {
+                actorAttributes.ac = {
+                    ...this.#createAttribute("Number", "Armor Class", monsterData.ac),
+                    ...baseAttrObject,
+                };
+                actorAttributes.pd = {
+                    ...this.#createAttribute("Number", "Physical Defense", monsterData.pd),
+                    ...baseAttrObject,
+                };
+                actorAttributes.md = {
+                    ...this.#createAttribute("Number", "Mental Defense", monsterData.md),
+                    ...baseAttrObject,
+                };
+                actorAttributes.hp = {
+                    ...this.#createAttribute("Number", "Hit Points", monsterData.hp),
+                    ...baseAttrObject,
+                    max: parseInt(monsterData.hp),
+                    temp: 0,
+                    tempmax: 0,
+                    automatic: true,
+                };
+            }
 
             let actorDetails = {};
-            actorDetails.flavor = { value: monsterData.flavor_text };
-            actorDetails.role = { value: monsterData.role.toLowerCase() };
 
-            const getSystemSize = (sizeText) => {
-                if (!sizeText) {
-                    return "normal";
-                }
+            if (monsterDescData?.level) {
+                actorAttributes.init = {
+                    ...this.#createAttribute("Number", "Initiative Modifier", monsterDescData.initiative),
+                    ...baseAttrObject,
+                };
+                actorAttributes.level = {
+                    ...this.#createAttribute("Number", "Level", monsterDescData.level),
+                    ...baseAttrObject,
+                };
 
-                const multiStrengthMatch = sizeText.match(/^(Double|Triple)-strength/i);
-                if (multiStrengthMatch) {
-                    return multiStrengthMatch[1].toLowerCase();
-                }
+                actorDetails.flavor = { value: monsterDescData.flavor_text };
+                actorDetails.role = { value: monsterDescData.role.toLowerCase() };
 
-                return sizeText.toLowerCase();
-            };
+                const getSystemSize = (sizeText) => {
+                    if (!sizeText) {
+                        return "normal";
+                    }
 
-            actorDetails.size = {
-                value: getSystemSize(monsterData.size),
-            };
-            actorDetails.type = { value: monsterData.type.toLowerCase() };
-            actorDetails.vulnerability = { value: monsterData.vulnerability?.toLowerCase() };
+                    const multiStrengthMatch = sizeText.match(/^(Double|Triple)-strength/i);
+                    if (multiStrengthMatch) {
+                        return multiStrengthMatch[1].toLowerCase();
+                    }
+
+                    return sizeText.toLowerCase();
+                };
+
+                actorDetails.size = {
+                    value: getSystemSize(monsterDescData.size),
+                };
+                actorDetails.type = { value: monsterDescData.type.toLowerCase() };
+                actorDetails.vulnerability = { value: monsterDescData.vulnerability?.toLowerCase() };
+            }
 
             actorData.system = {
                 attributes: actorAttributes,
@@ -2231,7 +2264,7 @@ ${this.writeMonsterCard(monsterData)}
             };
 
             actorData.prototypeToken = {
-                name: monsterData.name,
+                name: monsterDescData?.name ?? "",
                 displayBars: 40,
                 prependAdjective: true,
                 displayName: 20,
@@ -2240,7 +2273,7 @@ ${this.writeMonsterCard(monsterData)}
             return actorData;
         }
 
-        async getFullMonster() {
+        static async #getFullMonsterData() {
             const monsterText = await this.#promptForMonsterText();
 
             if (!monsterText) {
@@ -2279,37 +2312,37 @@ ${this.writeMonsterCard(monsterData)}
             return monsterData;
         }
 
-        #getMonsterDescription(descText) {
+        static #getMonsterDescription(descText) {
             const parser = new Parser13AMonster.Namespace.PdfBlockParser(descText);
 
             return parser.parseDescriptionBlock();
         }
 
-        #getMonsterAttacks(attackText) {
+        static #getMonsterAttacks(attackText) {
             const parser = new Parser13AMonster.Namespace.PdfBlockParser(attackText);
 
             return parser.parseAttackBlock();
         }
 
-        #getMonsterTraits(traitText) {
+        static #getMonsterTraits(traitText) {
             const parser = new Parser13AMonster.Namespace.PdfBlockParser(traitText);
 
             return parser.parseTraitBlock();
         }
 
-        #getMonsterNastierTraits(nastierText) {
+        static #getMonsterNastierTraits(nastierText) {
             const parser = new Parser13AMonster.Namespace.PdfBlockParser(nastierText);
 
             return parser.parseTraitBlock();
         }
 
-        #getMonsterDefenses(defenseText) {
+        static #getMonsterDefenses(defenseText) {
             const parser = new Parser13AMonster.Namespace.PdfBlockParser(defenseText);
 
             return parser.parseDefenseBlock();
         }
 
-        async #promptForMonsterText() {
+        static async #promptForMonsterText() {
             const inputForm = `<form>
     <div>
         <h2>Input the monster to be parsed, split into logical blocks (scroll down for nastier traits and defenses)</h2>
