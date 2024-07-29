@@ -1300,7 +1300,7 @@ ${this.writeMonsterCard(monsterData)}
         }
 
         static get attackStarterRegex() {
-            return /^(?<full_name>(\[(?<special>.*)] ?)?(?<base_name>([CR]:)?[^:]+)) ?— ?(?<attack_desc>.*)/i;
+            return /^(?<full_name>(\[(?<special>.*)] ?)?(?<base_name>([CR]:)?[^:]+)) ?[—-] ?(?<attack_desc>.*)/i;
         }
 
         static get triggeredAttackRegex() {
@@ -1324,7 +1324,7 @@ ${this.writeMonsterCard(monsterData)}
         }
 
         static get pdfFollowUpRegex() {
-            return /^([^:—]+|[^A-Z].+(action|attack|enemy|\d|battle|effect|roll|move):|[^A-Z\[].+—.*)$/m;
+            return /^([^:—-]+|[^A-Z].+(action|attack|enemy|\d|battle|effect|roll|move):|[^A-Z\[].+[—-].*)$/m;
         }
 
         static get nastierHeaderRegex() {
