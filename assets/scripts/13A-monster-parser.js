@@ -1850,7 +1850,7 @@ ${this.writeMonsterCard(monsterData)}
             };
 
             if (descriptionMatch.groups.size) {
-                monsterDescription.size = descriptionMatch.groups.size.toLowerCase();
+                monsterDescription.strength = descriptionMatch.groups.size.toLowerCase();
             }
             monsterDescription.level = descriptionMatch.groups.level;
             monsterDescription.levelOrdinal =
