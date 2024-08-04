@@ -111,7 +111,7 @@ Here's a picture showing which part of the monster's statblock is which block:
 
 ```js
 if (game !== undefined) {
-    Parser13AMonster.Namespace.FoundryParser.createMonsterSheet();
+    Parser13AMonster.Parser.FoundryParser.createMonsterSheet();
 }
 ```
 
