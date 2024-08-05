@@ -187,9 +187,13 @@ export class MonsterReformatter13A {
             #nastierTraits = [];
 
             #ac = "";
+            #ac_base = "";
             #pd = "";
+            #pd_base = "";
             #md = "";
+            #md_base = "";
             #hp = "";
+            #hp_base = "";
 
             #description = "";
 
@@ -211,6 +215,10 @@ export class MonsterReformatter13A {
                 pd = null,
                 md = null,
                 hp = null,
+                ac_base = null,
+                pd_base = null,
+                md_base = null,
+                hp_base = null,
                 description = null,
             } = {}) {
                 this.#name = name;
@@ -230,6 +238,10 @@ export class MonsterReformatter13A {
                 this.#pd = pd;
                 this.#md = md;
                 this.#hp = hp;
+                this.#ac_base = ac_base;
+                this.#pd_base = pd_base;
+                this.#md_base = md_base;
+                this.#hp_base = hp_base;
                 this.#description = description;
             }
 
@@ -252,6 +264,10 @@ export class MonsterReformatter13A {
                 this.pd = null;
                 this.md = null;
                 this.hp = null;
+                this.ac_base = null;
+                this.pd_base = null;
+                this.md_base = null;
+                this.hp_base = null;
                 this.description = null;
             }
 
@@ -318,6 +334,18 @@ export class MonsterReformatter13A {
                 }
                 if (!MonsterReformatter13A.Helpers.isEmpty(other.hp)) {
                     this.#hp = other.hp;
+                }
+                if (!MonsterReformatter13A.Helpers.isEmpty(other.ac_base)) {
+                    this.#ac_base = other.ac_base;
+                }
+                if (!MonsterReformatter13A.Helpers.isEmpty(other.pd_base)) {
+                    this.#pd_base = other.pd_base;
+                }
+                if (!MonsterReformatter13A.Helpers.isEmpty(other.md_base)) {
+                    this.#md_base = other.md_base;
+                }
+                if (!MonsterReformatter13A.Helpers.isEmpty(other.hp_base)) {
+                    this.#hp_base = other.hp_base;
                 }
                 if (!MonsterReformatter13A.Helpers.isEmpty(other.description)) {
                     this.#description = other.description;
@@ -485,6 +513,38 @@ export class MonsterReformatter13A {
                 this.#hp = value;
             }
 
+            get ac_base() {
+                return this.#ac_base;
+            }
+
+            set ac_base(value) {
+                this.#ac_base = value;
+            }
+
+            get pd_base() {
+                return this.#pd_base;
+            }
+
+            set pd_base(value) {
+                this.#pd_base = value;
+            }
+
+            get md_base() {
+                return this.#md_base;
+            }
+
+            set md_base(value) {
+                this.#md_base = value;
+            }
+
+            get hp_base() {
+                return this.#hp_base;
+            }
+
+            set hp_base(value) {
+                this.#hp_base = value;
+            }
+
             get description() {
                 return this.#description;
             }
@@ -566,7 +626,7 @@ export class MonsterReformatter13A {
                     md: /^MD/i,
                     hp: /^HP/i,
                     anyDefense: /^(AC|PD|MD|HP)/i,
-                    anyDefenseOneLine: /^(?<name>AC|PD|MD|HP) (?<value>\d+)( \(mook\))?$/i,
+                    anyDefenseOneLine: /^(?<name>AC|PD|MD|HP)(?<base>\d+)? (?<value>\d+)( \(mook\))?$/i,
                     allDefensesOneLine: /^AC +(?<ac>\d+) +PD +(?<pd>\d+) +MD +(?<md>\d+) +HP +(?<hp>\d+)( \(mook\))?/i,
                     other: /^\((?<name>.+)\)+/,
                     value: /^(?<value>\d+)/,
@@ -998,7 +1058,12 @@ export class MonsterReformatter13A {
                             MonsterReformatter13A.Parser.ParsingRegexes.defensesRegex.anyDefenseOneLine,
                         ))
                     ) {
-                        defenses[defenseMatch.groups.name.toLowerCase()] = defenseMatch.groups.value;
+                        const defenseName = defenseMatch.groups.name.toLowerCase();
+
+                        defenses[defenseName] = defenseMatch.groups.value;
+                        if (defenseMatch.groups.base) {
+                            defenses[`${defenseName}_base`] = defenseMatch.groups.base;
+                        }
                     }
                     this.#textHandler.advanceIndex();
                 }
@@ -1985,7 +2050,19 @@ ${this.writeMonsterCard(monsterData)}
             static #writeDefenses(monsterData) {
                 if (!monsterData?.ac) return;
 
-                return `\\monsterDefenses{${monsterData.ac}}{${monsterData.pd}}{${monsterData.md}}{${monsterData.hp}}`;
+                const defenses = [
+                    "\\monsterDefenses",
+                    `{${monsterData.ac}}`,
+                    monsterData.ac_base ? "[" + monsterData.ac_base + "]" : "",
+                    `{${monsterData.pd}}`,
+                    monsterData.pd_base ? "[" + monsterData.pd_base + "]" : "",
+                    `{${monsterData.md}}`,
+                    monsterData.md_base ? "[" + monsterData.md_base + "]" : "",
+                    `{${monsterData.hp}}`,
+                    monsterData.hp_base ? "[" + monsterData.hp_base + "]" : "",
+                ];
+
+                return defenses.filter((s) => s).join("");
             }
 
             /**
@@ -2287,7 +2364,7 @@ ${this.writeMonsterCard(monsterData)}
                     actorDetails.vulnerability = { value: monsterDescData.vulnerability?.toLowerCase() };
 
                     if (monsterDescData.size) {
-                        actorDetails.size = { value: monsterDescData.size }
+                        actorDetails.size = { value: monsterDescData.size };
                     }
                 }
 
