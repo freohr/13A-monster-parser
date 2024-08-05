@@ -508,7 +508,7 @@ export class MonsterReformatter13A {
             }
 
             static get attackStarterRegex() {
-                return /^(?<full_name>(\[(?<special>.*)] ?)?(?<base_name>([CR]:)?[^:]+)) ?[—–-] ?(?<attack_desc>.*)/i;
+                return /^(?<full_name>(\[(?<special>.*)] ?)?(?<base_name>([CR]Q?:)?[^:]+)) ?[—–-] ?(?<attack_desc>.*)/i;
             }
 
             static get triggeredAttackRegex() {
@@ -516,7 +516,7 @@ export class MonsterReformatter13A {
             }
 
             static get attackTraitStarterRegex() {
-                return /^ ?(?<trait_name>.+)(?<![RC]): ?(?<trait_desc>.*)/;
+                return /^ ?(?<trait_name>.+)(?<![RC]Q?): ?(?<trait_desc>.*)/;
             }
 
             static get standardAttackTraitNames() {
@@ -524,7 +524,7 @@ export class MonsterReformatter13A {
             }
 
             static get traitStarterRegex() {
-                return /^(?! )(?<trait_name>.+?)(?<![RC]): ?(?<trait_desc>.*)/;
+                return /^(?! )(?<trait_name>.+?)(?<![RC]Q?): ?(?<trait_desc>.*)/;
             }
 
             static get resistStarterRegex() {
