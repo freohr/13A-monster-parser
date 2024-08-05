@@ -342,6 +342,10 @@ export class MonsterReformatter13A {
                     desc.flavor_text = this.flavor_text;
                 }
 
+                if (this.size) {
+                    desc.size = this.size;
+                }
+
                 if (this.role === "mook") {
                     desc.mook = "yes";
                 }
@@ -491,8 +495,12 @@ export class MonsterReformatter13A {
         };
 
         static ParsingRegexes = class ParsingRegexes {
-            static get strengthLineRegex() {
+            static get strengthLine1eRegex() {
                 return /(?<strength>.+?)? ?(((?<ordinal>(?<level>\d+)\s*(st|nd|rd|th))[ -])level|level (?<levelAfter>\d+)) (?<role>\S+) \[((?<size>\S+) )?(?<type>\S+)]/i;
+            }
+
+            static get strengthLine2eRegex() {
+                return /((?<ordinal>(?<level>\d+)\s*(st|nd|rd|th))) level (?<strength>(double|triple)-strength)? ?(?<mook>mook )?(?<role>\S+) \[ ?(?<size>tiny|small|large|huge)? ?(?<type>\S+) ?]/i;
             }
 
             static get htmlStrengthLineRegex() {
@@ -884,9 +892,12 @@ export class MonsterReformatter13A {
                 const flavorText = [];
                 while (
                     !this.#textHandler.atEnd &&
-                    this.#textHandler.currentLine.match(
-                        MonsterReformatter13A.Parser.ParsingRegexes.strengthLineRegex,
-                    ) === null
+                    !this.#textHandler.currentLine.match(
+                        MonsterReformatter13A.Parser.ParsingRegexes.strengthLine1eRegex,
+                    ) &&
+                    !this.#textHandler.currentLine.match(
+                        MonsterReformatter13A.Parser.ParsingRegexes.strengthLine2eRegex,
+                    )
                 ) {
                     flavorText.push(this.#textHandler.currentLine);
                     this.#textHandler.advanceIndex();
@@ -897,7 +908,7 @@ export class MonsterReformatter13A {
                 let strengthMatch;
                 if (
                     (strengthMatch = this.#textHandler.currentLine.match(
-                        MonsterReformatter13A.Parser.ParsingRegexes.strengthLineRegex,
+                        MonsterReformatter13A.Parser.ParsingRegexes.strengthLine1eRegex,
                     ))
                 ) {
                     monsterDescription.strength = strengthMatch.groups.strength?.toLowerCase().replace(/ /, "-");
@@ -913,6 +924,24 @@ export class MonsterReformatter13A {
                     }
 
                     this.#textHandler.advanceIndex();
+                } else if (
+                    (strengthMatch = this.#textHandler.currentLine.match(
+                        MonsterReformatter13A.Parser.ParsingRegexes.strengthLine2eRegex,
+                    ))
+                ) {
+                    monsterDescription.strength = strengthMatch.groups.strength?.toLowerCase().replace(/ /, "-");
+                    monsterDescription.level = strengthMatch.groups.level;
+                    monsterDescription.levelOrdinal =
+                        strengthMatch.groups.ordinal?.replace(/ /, "") ??
+                        MonsterReformatter13A.Helpers.getOrdinal(monsterDescription.level);
+                    monsterDescription.type = strengthMatch.groups.type.toLowerCase();
+                    monsterDescription.role = strengthMatch.groups.role.toLowerCase();
+                    if (strengthMatch.groups.mook) {
+                        monsterDescription.mook = "yes";
+                    }
+                    if (strengthMatch.groups.size) {
+                        monsterDescription.size = strengthMatch.groups.size.toLowerCase();
+                    }
                 } else {
                     throw "Bad monster description block format";
                 }
@@ -969,7 +998,7 @@ export class MonsterReformatter13A {
                             MonsterReformatter13A.Parser.ParsingRegexes.defensesRegex.anyDefenseOneLine,
                         ))
                     ) {
-                        defenses[defenseMatch.groups.name.toLowerCase()] = parseInt(defenseMatch.groups.value);
+                        defenses[defenseMatch.groups.name.toLowerCase()] = defenseMatch.groups.value;
                     }
                     this.#textHandler.advanceIndex();
                 }
@@ -1033,7 +1062,7 @@ export class MonsterReformatter13A {
                     .join(" ");
 
                 const descriptionMatch = descriptionString.match(
-                    MonsterReformatter13A.Parser.ParsingRegexes.strengthLineRegex,
+                    MonsterReformatter13A.Parser.ParsingRegexes.strengthLine1eRegex,
                 );
 
                 if (!descriptionMatch) {
@@ -1148,7 +1177,7 @@ export class MonsterReformatter13A {
                 let currentLine;
                 while (
                     ((currentLine = this.#textHandler.currentLine),
-                    !currentLine.match(MonsterReformatter13A.Parser.ParsingRegexes.blockSeparator))
+                        !currentLine.match(MonsterReformatter13A.Parser.ParsingRegexes.blockSeparator))
                 ) {
                     if (currentLine.match(MonsterReformatter13A.Parser.ParsingRegexes.blockSeparator)) {
                         break;
@@ -1618,7 +1647,7 @@ export class MonsterReformatter13A {
 
             #getMonsterDefenses() {
                 const defenseNameWrapper =
-                        this.#fullStatBlock.children[this.#fullStatBlock.childElementCount - 2].children,
+                    this.#fullStatBlock.children[this.#fullStatBlock.childElementCount - 2].children,
                     defenseValueWrapper =
                         this.#fullStatBlock.children[this.#fullStatBlock.childElementCount - 1].children,
                     defenseNames = [],
@@ -1904,7 +1933,7 @@ export class MonsterReformatter13A {
 
                 const monsterBlock = [
                     "\\monsterCard{",
-                    this.#writeDescription(monsterData.fullDescription),
+                    this.#writeDescription(monsterData),
                     this.#writeAttackBlock(monsterData.attacks),
                     this.#writeTraitBlock(monsterData.traits),
                     this.#writeTriggeredAttackBlock(monsterData.triggeredAttacks),
@@ -2256,6 +2285,10 @@ ${this.writeMonsterCard(monsterData)}
                     };
                     actorDetails.type = { value: monsterDescData.type.toLowerCase() };
                     actorDetails.vulnerability = { value: monsterDescData.vulnerability?.toLowerCase() };
+
+                    if (monsterDescData.size) {
+                        actorDetails.size = { value: monsterDescData.size }
+                    }
                 }
 
                 actorData.system = {
