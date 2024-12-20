@@ -108,7 +108,7 @@ export default class FoundryWriter {
      * @returns Actor
      */
     static async createMonsterSheet() {
-        const monsterData = await this.#getFullMonsterData();
+        const monsterData = this.#getFullMonsterData();
 
         const baseData = this.createFoundryBaseActorData(monsterData);
         const itemData = this.createFoundryActorItemsData(monsterData);
@@ -190,6 +190,8 @@ export default class FoundryWriter {
 
         let actorDetails = {};
 
+        let monsterIcon = null;
+
         if (monsterDescData?.level) {
             actorAttributes.init = {
                 ...this.#createAttribute("Number", "Initiative Modifier", monsterDescData.initiative),
@@ -220,6 +222,7 @@ export default class FoundryWriter {
                 value: getSystemStrength(monsterDescData.strength),
             };
             actorDetails.type = { value: monsterDescData.type.toLowerCase() };
+            monsterIcon = `systems/archmage/assets/icons/tokens/monsters/${actorDetails.type.value}.webp`
             actorDetails.vulnerability = { value: monsterDescData.vulnerability?.toLowerCase() };
 
             if (monsterDescData.size) {
@@ -238,6 +241,13 @@ export default class FoundryWriter {
             prependAdjective: true,
             displayName: 20,
         };
+
+        if (monsterIcon) {
+            actorData.img = monsterIcon;
+            actorData.prototypeToken.texture = {
+                src: monsterIcon,
+            }
+        }
 
         return actorData;
     }
