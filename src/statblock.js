@@ -89,16 +89,7 @@ export class MonsterStatBlock {
     }
 
     clear() {
-        this.name = null;
-        this.flavor_text = null;
-        this.size = null;
-        this.strength = null;
-        this.level = null;
-        this.levelOrdinal = null;
-        this.role = null;
-        this.type = null;
-        this.initiative = null;
-        this.vulnerability = null;
+        this.clearDescription();
         this.attacks = null;
         this.traits = null;
         this.triggeredAttacks = null;
@@ -112,6 +103,19 @@ export class MonsterStatBlock {
         this.md_base = null;
         this.hp_base = null;
         this.description = null;
+    }
+
+    clearDescription() {
+        this.name = null;
+        this.flavor_text = null;
+        this.size = null;
+        this.strength = null;
+        this.level = null;
+        this.levelOrdinal = null;
+        this.role = null;
+        this.type = null;
+        this.initiative = null;
+        this.vulnerability = null;
     }
 
     /**
@@ -228,6 +232,10 @@ export class MonsterStatBlock {
         return this.#name;
     }
 
+    set name(value) {
+        this.#name = value;
+    }
+
     get flavor_text() {
         return this.#flavor_text;
     }
@@ -256,20 +264,40 @@ export class MonsterStatBlock {
         return this.#level;
     }
 
+    set level(value) {
+        this.#level = value;
+    }
+
     get levelOrdinal() {
         return this.#levelOrdinal;
+    }
+
+    set levelOrdinal(value) {
+        this.#levelOrdinal = value;
     }
 
     get role() {
         return this.#role;
     }
 
+    set role(value) {
+        this.#role = value;
+    }
+
     get type() {
         return this.#type;
     }
 
+    set type(value) {
+        this.#type = value;
+    }
+
     get initiative() {
         return this.#initiative;
+    }
+
+    set initiative(value) {
+        this.#initiative = value;
     }
 
     get vulnerability() {
@@ -395,7 +423,7 @@ export class MonsterStatBlock {
     set description(value) {
         this.#description = value;
     }
-};
+}
 
 export class Trait {
     #name = "";
@@ -428,7 +456,7 @@ export class Trait {
     get traits() {
         return this.#traits;
     }
-};
+}
 
 export class Attack {
     #name = "";
@@ -465,4 +493,4 @@ export class Attack {
     get traits() {
         return this.#traits;
     }
-};
+}
