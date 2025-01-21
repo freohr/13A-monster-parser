@@ -1,6 +1,6 @@
 export default class ParsingRegexes {
 	static get strengthLine1eRegex() {
-		return /(?<strength>.+?)? ?(((?<ordinal>(?<level>\d+)\s*(st|nd|rd|th))[ -])level|level (?<levelAfter>\d+)) (?<role>\S+) \[((?<size>\S+) )?(?<type>\S+)]/i;
+		return /(?<strength>[^\d ]+?)? ?(((?<ordinal>(?<level>\d+)\s*(st|nd|rd|th))[ -])level|level (?<levelAfter>\d+)) (?<role>\S+) \[((?<size>\S+) )?(?<type>\S+)]/i;
 	}
 
 	static get strengthLine2eRegex() {
