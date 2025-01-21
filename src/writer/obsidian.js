@@ -275,6 +275,7 @@ export default class ObsidianBlockWriter {
     static writeFullNote(fullStatblock) {
         const output = [
             "---",
+            `title: ${fullStatblock.name}`,
             `level: ${fullStatblock.fullDescription.level}`,
             `role: ${fullStatblock.fullDescription.role}`,
             `type: ${fullStatblock.fullDescription.type}`,
@@ -282,8 +283,9 @@ export default class ObsidianBlockWriter {
             `tags: [\"13A/Bestiary/${fullStatblock.fullDescription.type}\", \"13A/Monsters/Role/${fullStatblock.fullDescription.role}\", \"13A/Monsters/Strength/${fullStatblock.fullDescription.strength}\"]`,
             "aliases:",
             `  - ${fullStatblock.fullDescription.name}`,
-            `source: `,
+            `source: ${fullStatblock.source} `,
             "---",
+            "",
             ObsidianBlockWriter.writeFullStatblock(fullStatblock),
         ];
 

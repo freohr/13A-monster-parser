@@ -11,6 +11,7 @@ export default class MonsterStatBlock {
     #type = "";
     #initiative = "";
     #vulnerability = "";
+    #source = "";
 
     /**
      * @type {Attack[]}
@@ -42,6 +43,7 @@ export default class MonsterStatBlock {
 
     constructor({
         name = null,
+        source = null,
         strength = null,
         size = null,
         level = null,
@@ -65,6 +67,7 @@ export default class MonsterStatBlock {
         description = null,
     } = {}) {
         this.#name = name;
+        this.#source = source;
         this.#strength = strength;
         this.#size = size;
         this.#level = level;
@@ -90,6 +93,7 @@ export default class MonsterStatBlock {
 
     clear() {
         this.clearDescription();
+        this.source = null;
         this.attacks = null;
         this.traits = null;
         this.triggeredAttacks = null;
@@ -124,6 +128,9 @@ export default class MonsterStatBlock {
     import(other) {
         if (!Helpers.isEmpty(other.name)) {
             this.#name = other.name;
+        }
+        if (!Helpers.isEmpty(other.source)) {
+            this.#source = other.source;
         }
         if (!Helpers.isEmpty(other.flavor_text)) {
             this.#flavor_text = other.flavor_text;
@@ -226,6 +233,14 @@ export default class MonsterStatBlock {
         }
 
         return desc;
+    }
+
+    get source() {
+        return this.#source;
+    }
+
+    set source(value) {
+        this.#source = value;
     }
 
     get name() {
