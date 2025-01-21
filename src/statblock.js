@@ -1,6 +1,6 @@
 import Helpers from "./helpers.js";
 
-export class MonsterStatBlock {
+export default class MonsterStatBlock {
     #name = "";
     #flavor_text = "";
     #size = "";

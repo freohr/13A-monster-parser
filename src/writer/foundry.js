@@ -1,6 +1,6 @@
 import ParsingRegexes from "../parser/regexes.js";
 import Helpers from "../helpers.js";
-import { Trait, Attack, MonsterStatBlock } from "../statblock.js"
+import MonsterStatBlock, { Trait, Attack } from "../statblock.js"
 
 export default class FoundryWriter {
     static #createAttribute(type, label, value) {

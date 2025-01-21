@@ -1,5 +1,5 @@
 import ParsingRegexes from "./regexes.js";
-import { Trait, Attack, MonsterStatBlock } from "../statblock.js"
+import MonsterStatBlock, { Trait, Attack } from "../statblock.js"
 import Helpers from "../helpers.js";
 
 export default class SrdHtmlParser {
